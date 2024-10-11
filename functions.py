@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-def plot_histogram(data, xlabel, ylabel, title, color='orange'):
+def plot_histogram(data, xlabel, ylabel, title, color='blue'):
     """
     Plots a histogram of the given data.
 
