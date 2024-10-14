@@ -39,3 +39,23 @@ def boxplots(data, color='lightblue'):
             
         else:
             continue
+
+
+
+def plot_missing_values_bar(data, xlabel, ylabel, title):
+    """
+    Plots a bar chart of missing values for each column.
+
+    Parameters:
+        data (Series): A Pandas Series containing column names and their corresponding missing values.
+        xlabel (str): The label for the x-axis.
+        ylabel (str): The label for the y-axis.
+        title (str): The title of the bar chart.
+    """
+    plt.bar(data.index, data.values, edgecolor='white', color='lightblue')
+    plt.xticks(rotation=45, ha='right')  
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(title)
+    plt.tight_layout()  
+    plt.show()
