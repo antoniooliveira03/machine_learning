@@ -66,7 +66,7 @@ def rfe(X, y, num, n_features, model=None):
         # Store the results
         results[feature] = selected_features
         
-    return results.to_list()
+    return results
 
 # CORRELATION MATRIX
 
@@ -99,7 +99,7 @@ def correlation_matrix(X, num, threshold=0.8, cmap = 'Blues'):
     # List of selected features: all features except those in to_drop
     selected_features = [feature for feature in X_num.columns if feature not in to_drop]
     
-    return selected_features, to_drop
+    return selected_features
 
 # UNIVARIATE TEST
 def var(X, num, threshold=0.01):
