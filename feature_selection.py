@@ -37,7 +37,7 @@ def lasso(X, y, num, alpha = 0.01, color = 'Blue'):
     
     selected_features = non_zero_importance.index
     
-    return selected_features
+    return selected_features.to_list()
 
 # RFE
 def rfe(X, y, num, n_features, model=None):
@@ -66,7 +66,7 @@ def rfe(X, y, num, n_features, model=None):
         # Store the results
         results[feature] = selected_features
         
-    return results
+    return results.to_list()
 
 # CORRELATION MATRIX
 
@@ -106,8 +106,20 @@ def var(X, num, threshold=0.01):
     X_num = X[num]
     # Calculate variance for each feature
     variances = X_num.var()
+    
     # Select features with variance above the threshold
     selected_features = variances[variances > threshold].index
+    
+    # Plot the variances as horizontal bars
+    plt.figure(figsize=(10, 8))
+    sns.barplot(x=variances.values, y=variances.index, orient='h')
+    plt.axvline(x=threshold, color='r', linestyle='--', label=f'Threshold = {threshold}')
+    plt.title('Feature Variance')
+    plt.xlabel('Variance')
+    plt.ylabel('Features')
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
     
     return selected_features.tolist()
 
@@ -115,9 +127,9 @@ def var(X, num, threshold=0.01):
 
 # CHI-SQUARED
 def chi_squared(X, y, categ, threshold=0.05):
-    
     X_categ = X[categ]
     
+    # Scale the features
     scaler = MinMaxScaler()
     X_scaled = pd.DataFrame(scaler.fit_transform(X_categ), 
                             columns=X_categ.columns)
@@ -138,12 +150,23 @@ def chi_squared(X, y, categ, threshold=0.05):
     # Filter features based on the threshold
     selected_features = scores_df[scores_df['Chi2 Score'] > threshold]['Feature']
     
-    return scores_df, selected_features.tolist()
+    # Plot the Chi-squared scores
+    plt.figure(figsize=(12, 8))
+    sns.barplot(x='Chi2 Score', y='Feature', data=scores_df)
+    plt.axvline(x=threshold, color='r', linestyle='--', label=f'Threshold = {threshold}')
+    plt.title('Chi-squared Scores for Features')
+    plt.xlabel('Chi-squared Score')
+    plt.ylabel('Features')
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+    return selected_features.tolist()
 
 # MUTUAL INFORMATION 
-def mutual_information(X, y, categ, threshold=0.1):
-    
+def mutual_information(X, y, categ, threshold=0.01):
     X_categ = X[categ]
+    
     # Calculate Mutual Information
     mi_scores = mutual_info_classif(X_categ, y, discrete_features='auto', random_state=42)
     
@@ -151,7 +174,18 @@ def mutual_information(X, y, categ, threshold=0.1):
     mi_scores_df = pd.DataFrame(mi_scores, index=X_categ.columns, columns=["Mutual Information"])
     mi_scores_df = mi_scores_df.sort_values(by="Mutual Information", ascending=False)
 
-     # Filter features based on the threshold
+    # Filter features based on the threshold
     selected_features = mi_scores_df[mi_scores_df["Mutual Information"] >= threshold].index.tolist()
     
-    return mi_scores_df, selected_features
+    # Plot the Mutual Information scores
+    plt.figure(figsize=(12, 8))
+    sns.barplot(x='Mutual Information', y=mi_scores_df.index, data=mi_scores_df)
+    plt.axvline(x=threshold, color='r', linestyle='--', label=f'Threshold = {threshold}')
+    plt.title('Mutual Information Scores for Features')
+    plt.xlabel('Mutual Information Score')
+    plt.ylabel('Features')
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+    
+    return selected_features
