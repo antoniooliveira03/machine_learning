@@ -29,35 +29,35 @@ def ball_tree_impute(df, target, n_neighbors=5):
     return df
 
 
-def custom_impute(df, var_name):
+def custom_impute(df):
       
-    
-    if any(word in var_name for word in ['Year', 'Month', 'Day']) and var_name != 'Birth Year':
-        df[var_name] = df[var_name].fillna(df[var_name].median())
-         
-    
-    # Birth Year
-    if var_name == 'Birth Year':
-    # Only perform imputation for rows where both columns are not NaN and Birth Year is NaN or 0
-        mask = df['Accident Year'].notna() & df['Age at Injury'].notna()
-        df.loc[mask & (df[var_name].isna() | (df[var_name] == 0)), 
-                   var_name] = df['Accident Year'] - df['Age at Injury']
-    
-  
-    
-    # Zip Code
-    if var_name == 'Zip Code':
-        df[var_name] = df[var_name].fillna(99999)
+    for var_name in df.columns:
+        if any(word in var_name for word in ['Year', 'Month', 'Day']) and var_name != 'Birth Year':
+            df[var_name] = df[var_name].fillna(df[var_name].median())
+            
         
-    # Wage
-    if var_name == 'Average Weekly Wage':
-        df = ball_tree_impute(df, var_name)
-         
+        # Birth Year
+        if var_name == 'Birth Year':
+        # Only perform imputation for rows where both columns are not NaN and Birth Year is NaN or 0
+            mask = df['Accident Year'].notna() & df['Age at Injury'].notna()
+            df.loc[mask & (df[var_name].isna() | (df[var_name] == 0)), 
+                    var_name] = df['Accident Year'] - df['Age at Injury']
         
-    # for all 'code' variables    
-    code_columns = df.filter(regex='Code$', axis=1).columns
-    df[code_columns] = df[code_columns].fillna(0)
+    
         
+        # Zip Code
+        if var_name == 'Zip Code':
+            df[var_name] = df[var_name].fillna(99999)
+            
+        # Wage
+        if var_name == 'Average Weekly Wage':
+            df = ball_tree_impute(df, var_name)
+            
+            
+        # for all 'code' variables    
+        code_columns = df.filter(regex='Code$', axis=1).columns
+        df[code_columns] = df[code_columns].fillna(0)
+            
     return df
 
 def log_transform(X):
