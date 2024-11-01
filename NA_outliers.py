@@ -1,10 +1,11 @@
 from sklearn.neighbors import NearestNeighbors
 import numpy as np
+import pandas as pd
 
 
 def ball_tree_impute(df, target, n_neighbors=5):
     # Get all features except the target column
-    features = df.columns.drop([target, 'Claim Injury Type'])
+    features = df.columns.drop(target)
     
     # Separate rows with and without missing target values
     missing_mask = df[target].isna()
@@ -18,47 +19,57 @@ def ball_tree_impute(df, target, n_neighbors=5):
     # Find nearest neighbors for rows with missing values
     _, indices = knn.kneighbors(missing_data[features])
 
-    # Impute missing values by averaging the target values of nearest neighbors
-    imputed_values = [
-        non_missing_data.iloc[neighbor_indices][target].mean() for neighbor_indices in indices
-    ]
-    
-    # Assign the imputed values to the missing target values in the original DataFrame
-    df.loc[missing_mask, target] = imputed_values
+     # Initialize a Series to store imputed values
+    imputed_values = pd.Series(index=df.index)
 
-    return df
+    # Impute missing values by averaging the target values of nearest neighbors
+    for i, neighbor_indices in enumerate(indices):
+        # Calculate the mean of the neighbors' target values
+        mean_value = non_missing_data.iloc[neighbor_indices][target].mean()
+        imputed_values[missing_data.index[i]] = mean_value
+
+    # Combine the imputed values with the original target values
+    result = df[target].combine_first(imputed_values)
+
+    return result
+
+
+
+def log_transform(X):
+    return np.where(X > 0, np.log1p(X), X)
+
+
 
 
 def custom_impute(df):
       
     for var_name in df.columns:
+        
         if any(word in var_name for word in ['Year', 'Month', 'Day']) and var_name != 'Birth Year':
-            df[var_name] = df[var_name].fillna(df[var_name].median())
-            
+                df[var_name] = df[var_name].fillna(df[var_name].median())
         
-        # Birth Year
         if var_name == 'Birth Year':
-        # Only perform imputation for rows where both columns are not NaN and Birth Year is NaN or 0
+            # Only perform imputation for rows where both columns are not NaN and Birth Year is NaN or 0
             mask = df['Accident Year'].notna() & df['Age at Injury'].notna()
-            df.loc[mask & (df[var_name].isna() | (df[var_name] == 0)), 
-                    var_name] = df['Accident Year'] - df['Age at Injury']
-        
-    
+            df.loc[mask & (df['Birth Year'].isna() | (df['Birth Year'] == 0)), 
+                    'Birth Year'] = df['Accident Year'] - df['Age at Injury']
+
+            remaining_nans = df['Birth Year'].isna().sum()
+            if remaining_nans > 0:
+                median = df[var_name].median()
+                df[var_name] = df[var_name].fillna(median)
+
         
         # Zip Code
         if var_name == 'Zip Code':
-            df[var_name] = df[var_name].fillna(99999)
-            
-        # Wage
-        if var_name == 'Average Weekly Wage':
-            df = ball_tree_impute(df, var_name)
-            
-            
-        # for all 'code' variables    
-        code_columns = df.filter(regex='Code$', axis=1).columns
-        df[code_columns] = df[code_columns].fillna(0)
-            
-    return df
+            df['Zip Code'] = df['Zip Code'].fillna(99999)
 
-def log_transform(X):
-    return np.where(X > 0, np.log1p(X), X)
+        # for all 'code' variables  
+        if 'Code' in var_name and var_name != 'Zip Code':
+            code_columns = df.filter(regex='Code$', axis=1).columns
+            df[code_columns] = df[code_columns].fillna(0)
+
+    
+    df['Average Weekly Wage'] = ball_tree_impute(df, 'Average Weekly Wage')
+          
+    return df
