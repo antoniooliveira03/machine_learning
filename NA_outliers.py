@@ -1,5 +1,6 @@
 from sklearn.neighbors import NearestNeighbors
 import numpy as np
+import pandas as pd
 
 
 def ball_tree_impute(df, target, n_neighbors=5):
