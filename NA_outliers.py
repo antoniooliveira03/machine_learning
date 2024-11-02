@@ -35,12 +35,6 @@ def ball_tree_impute(df, target, n_neighbors=5):
 
 
 
-def log_transform(X):
-    return np.where(X > 0, np.log1p(X), X)
-
-
-
-
 def custom_impute(df):
       
     for var_name in df.columns:
@@ -73,3 +67,8 @@ def custom_impute(df):
     df['Average Weekly Wage'] = ball_tree_impute(df, 'Average Weekly Wage')
           
     return df
+
+
+def log_transform(X):
+    return np.where(X > 0, np.log1p(X), X)
+
