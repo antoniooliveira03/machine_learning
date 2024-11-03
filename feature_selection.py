@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
+import pandas as pd
 
 def correlation_matrix(X, num, cmap='Blues'):
     X_num = X[num]
@@ -15,6 +16,7 @@ def correlation_matrix(X, num, cmap='Blues'):
 
 
 from sklearn.feature_selection import SelectKBest, chi2
+from sklearn.preprocessing import MinMaxScaler
 
 def chi_squared(X, y, categ, threshold=0.05):
     X_categ = X[categ]
@@ -55,3 +57,66 @@ def chi_squared(X, y, categ, threshold=0.05):
     print(X_categ.columns.tolist())
     print("\nFinal Decision for Categorical Features:\n")
     print(selected_features.tolist())
+
+
+from sklearn.feature_selection import RFE
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report, f1_score
+
+def rfe(X, y, num, n_features, model=None):
+    
+    X_num = X[num]
+    best_score = 0
+    best_features = []
+
+    results = {}
+    
+    for feature in n_features:
+        
+        # Perform RFE to select features
+        rfe = RFE(estimator=model, n_features_to_select=feature)
+        rfe.fit(X_num, y)
+
+        # Get selected features
+        selected_features = X_num.columns[rfe.support_]
+        
+        # Model predictions and classification report on the training set with selected features
+        y_pred = rfe.predict(X_num)
+        print(f"Classification Report for {feature} features:\n")
+        print(classification_report(y, y_pred))
+        
+        # Calculate the macro average F1 score
+        macro_f1 = f1_score(y, y_pred, average='macro')
+        print(f"Macro Avg F1 Score for {feature} features: {macro_f1:.4f}\n")
+        
+        # Store the results
+        results[feature] = selected_features
+        
+        # Check if this is the best score
+        if macro_f1 > best_score:
+            best_score = macro_f1
+            best_features = selected_features.tolist()  
+    
+    return best_features
+
+
+from sklearn.linear_model import Lasso
+
+def lasso(X, y, num, alpha = 0.01, color = 'lightblue'):
+    X_num = X[num] 
+    
+    lasso = Lasso(alpha=alpha)
+    lasso.fit(X_num, y)
+    
+    importance = pd.Series(lasso.coef_, index=X_num.columns)
+    
+    non_zero_importance = importance[importance != 0]
+    
+    non_zero_importance.sort_values().plot(kind="barh", color=color)
+    
+    plt.title("Lasso Feature Importance")
+    plt.xlabel("Coefficient Value")
+    plt.show()
+    
+    selected_features = non_zero_importance.index
+    print(selected_features.to_list())
