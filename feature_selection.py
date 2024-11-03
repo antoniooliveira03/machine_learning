@@ -120,3 +120,34 @@ def lasso(X, y, num, alpha = 0.01, color = 'lightblue'):
     
     selected_features = non_zero_importance.index
     print(selected_features.to_list())
+
+
+from sklearn.ensemble import ExtraTreesClassifier
+import matplotlib.pyplot as plt
+import numpy as np
+
+def plot_feature_importance(X, y, n_estimators=250, max_depth=None, random_state=42):
+   
+    # Initialize the ExtraTreesClassifier with given parameters
+    clf = ExtraTreesClassifier(n_estimators=n_estimators,
+                               max_depth=max_depth,
+                               random_state=random_state)
+
+    # Fit the model on the training data
+    clf.fit(X, y)
+
+    # Calculate feature importances
+    feature_importance = clf.feature_importances_
+    feature_importance = 100.0 * (feature_importance / feature_importance.max())
+
+    # Sort the indices of features based on importance
+    sorted_idx = np.argsort(feature_importance)
+    pos = np.arange(sorted_idx.shape[0]) + 0.5
+
+    # Plot feature importances
+    plt.figure(figsize=(12, 8))
+    plt.barh(pos, feature_importance[sorted_idx], align='center')
+    plt.yticks(pos, X.columns[sorted_idx])
+    plt.xlabel('Relative Importance')
+    plt.title('Feature Importance Using ExtraTreesClassifier')
+    plt.show()
