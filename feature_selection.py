@@ -26,26 +26,32 @@ def chi_squared(X, y, categ, threshold=0.05):
     X_scaled = pd.DataFrame(scaler.fit_transform(X_categ), 
                             columns=X_categ.columns)
     
+
     # Fit the chi-squared selector
     chi2_selector = SelectKBest(chi2, k='all')
     chi2_selector.fit(X_scaled, y)
 
-    # Get Chi-squared scores
+    # Get Chi-squared scores and p-values
     chi2_scores = chi2_selector.scores_
+    p_values = chi2_selector.pvalues_
 
-    # Create a DataFrame for scores
+    # Create a DataFrame for scores and p-values
     scores_df = pd.DataFrame({
         'Feature': X_categ.columns,
-        'Chi2 Score': chi2_scores
+        'Chi2 Score': chi2_scores,
+        'p-value': p_values
     })
 
-    # Filter features based on the threshold
-    selected_features = scores_df[scores_df['Chi2 Score'] > threshold]['Feature']
+    # Filter features based on the p-value threshold
+    selected_features = scores_df[scores_df['p-value'] < threshold]['Feature']
     
+    # Extract non-selected features
+    non_selected_features = scores_df[scores_df['p-value'] >= threshold]
+
     # Plot the Chi-squared scores
     plt.figure(figsize=(12, 8))
-    sns.barplot(x='Chi2 Score', y='Feature', data=scores_df)
-    plt.axvline(x=threshold, color='r', linestyle='--', label=f'Threshold = {threshold}')
+    sns.barplot(x='Chi2 Score', y='Feature', data=scores_df.sort_values(by='Chi2 Score', ascending=False))
+    plt.axvline(x=threshold, color='r', linestyle='--', label=f'p-value Threshold = {threshold}')
     plt.title('Chi-squared Scores for Features')
     plt.xlabel('Chi-squared Score')
     plt.ylabel('Features')
@@ -53,10 +59,15 @@ def chi_squared(X, y, categ, threshold=0.05):
     plt.tight_layout()
     plt.show()
     
-    print("\nInitial Features:\n")
+    print(f"\nInitial Features: {len(X_categ.columns.tolist())}\n")
     print(X_categ.columns.tolist())
-    print("\nFinal Decision for Categorical Features:\n")
+    print(f"\nDecision for Categorical Features (p-value < threshold): {len(selected_features.tolist())}\n")
     print(selected_features.tolist())
+
+    # Display non-selected features with their p-values and Chi-squared scores
+    print("\nNon-Selected Features (p-value >= threshold):\n")
+    print(non_selected_features[['Feature', 'Chi2 Score', 'p-value']])
+
 
 
 from sklearn.feature_selection import RFE
