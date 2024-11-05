@@ -112,25 +112,28 @@ def rfe(X, y, num, n_features, model=None):
 
 
 from sklearn.linear_model import Lasso
-
-def lasso(X, y, num, alpha = 0.01, color = 'lightblue'):
-    X_num = X[num] 
+def lasso(X, y, alpha = 0.01, color = 'lightblue'):
     
     lasso = Lasso(alpha=alpha)
-    lasso.fit(X_num, y)
+    lasso.fit(X, y)
     
-    importance = pd.Series(lasso.coef_, index=X_num.columns)
+    importance = pd.Series(lasso.coef_, index=X.columns)
     
     non_zero_importance = importance[importance != 0]
     
-    non_zero_importance.sort_values().plot(kind="barh", color=color)
+    importance.sort_values().plot(kind="barh", color=color)
     
     plt.title("Lasso Feature Importance")
     plt.xlabel("Coefficient Value")
     plt.show()
     
     selected_features = non_zero_importance.index
-    print(selected_features.to_list())
+    
+    print(f"\nInitial Features: {len(X.columns)}\n")
+    print(X.columns.tolist())
+    print(f"\nDecision for Numerical Features (lasso ≠ 0): {len(selected_features.tolist())}\n")
+    print(selected_features.tolist())
+
 
 
 from sklearn.ensemble import ExtraTreesClassifier

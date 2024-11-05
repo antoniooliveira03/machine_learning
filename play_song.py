@@ -27,8 +27,8 @@ def play_(audio_file):
     # Load the audio file
     audio = AudioSegment.from_file(audio_file)
 
-    # Slice the first 15 seconds (10 * 1000 milliseconds)
-    first_15_seconds = audio[:10 * 1000]
+    # Slice the first 10 seconds (10 * 1000 milliseconds)
+    first_10_seconds = audio[:10 * 1000]
 
     # Play the sliced audio
-    play(first_15_seconds)
+    play(first_10_seconds)
