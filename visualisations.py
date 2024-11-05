@@ -41,6 +41,45 @@ def boxplots(data, color='lightblue'):
             continue
 
 
+def boxplot_out(data, columns, ncols=2):
+    
+    num_columns = len(columns)
+    nrows = (num_columns + ncols - 1) // ncols  # Calculates the number of rows needed
+
+    plt.figure(figsize=(12 * ncols, 8 * nrows))
+
+    for i, column in enumerate(columns):
+        # Calculate quartiles and IQR
+        Q1 = data[column].quantile(0.25)
+        Q3 = data[column].quantile(0.75)
+        IQR = Q3 - Q1
+
+        # Determine the outlier thresholds
+        lower_bound = Q1 - 1.5 * IQR
+        upper_bound = Q3 + 1.5 * IQR
+
+        # Identify outliers
+        outliers = data[(data[column] < lower_bound) | (data[column] > upper_bound)][column]
+
+        # Create the box plot for the current column
+        plt.subplot(nrows, ncols, i + 1)  # Create a subplot grid
+        plt.boxplot(data[column], vert=False, widths=0.7,
+                    patch_artist=True, boxprops=dict(facecolor='lightblue', color='black'),
+                    medianprops=dict(color='black'))
+
+        # Scatter outliers
+        plt.scatter(outliers, [1] * len(outliers), color='red', marker='o', label='Outliers')
+
+        # Customize the plot
+        plt.title(f'Box Plot of {column} with Outliers')
+        plt.xlabel('Value')
+        plt.yticks([])
+        plt.legend()
+
+    plt.tight_layout()  # Adjust subplots to fit into the figure area.
+    plt.show()
+
+
 
 def plot_missing_values_bar(data, xlabel, ylabel, title):
     """
