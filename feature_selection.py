@@ -74,9 +74,8 @@ from sklearn.feature_selection import RFE
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report, f1_score
 
-def rfe(X, y, num, n_features, model=None):
+def rfe(X, y, n_features, model=None):
     
-    X_num = X[num]
     best_score = 0
     best_features = []
 
@@ -86,13 +85,13 @@ def rfe(X, y, num, n_features, model=None):
         
         # Perform RFE to select features
         rfe = RFE(estimator=model, n_features_to_select=feature)
-        rfe.fit(X_num, y)
+        rfe.fit(X, y)
 
         # Get selected features
-        selected_features = X_num.columns[rfe.support_]
+        selected_features = X.columns[rfe.support_]
         
         # Model predictions and classification report on the training set with selected features
-        y_pred = rfe.predict(X_num)
+        y_pred = rfe.predict(X)
         print(f"Classification Report for {feature} features:\n")
         print(classification_report(y, y_pred))
         
@@ -109,7 +108,6 @@ def rfe(X, y, num, n_features, model=None):
             best_features = selected_features.tolist()  
     
     return best_features
-
 
 from sklearn.linear_model import Lasso
 def lasso(X, y, alpha = 0.01, color = 'lightblue'):
@@ -140,15 +138,19 @@ from sklearn.ensemble import ExtraTreesClassifier
 import matplotlib.pyplot as plt
 import numpy as np
 
-def plot_feature_importance(X, y, n_estimators=250, max_depth=None, random_state=42):
+def plot_feature_importance(X_num, X_categ, y, n_estimators=250, random_state=42,
+                            threshold=5):
    
+    # Concatenate scaled and categorical features
+    X_comb = pd.concat([X_num, X_categ], axis=1)
+
+
     # Initialize the ExtraTreesClassifier with given parameters
     clf = ExtraTreesClassifier(n_estimators=n_estimators,
-                               max_depth=max_depth,
                                random_state=random_state)
 
     # Fit the model on the training data
-    clf.fit(X, y)
+    clf.fit(X_comb, y)
 
     # Calculate feature importances
     feature_importance = clf.feature_importances_
@@ -161,7 +163,17 @@ def plot_feature_importance(X, y, n_estimators=250, max_depth=None, random_state
     # Plot feature importances
     plt.figure(figsize=(12, 8))
     plt.barh(pos, feature_importance[sorted_idx], align='center')
-    plt.yticks(pos, X.columns[sorted_idx])
+    plt.yticks(pos, X_comb.columns[sorted_idx])
     plt.xlabel('Relative Importance')
     plt.title('Feature Importance Using ExtraTreesClassifier')
+    # Draw a line at the 5% importance threshold
+    plt.axvline(x=threshold, color='red', linestyle='--', label=f'{threshold}% Importance Threshold')
+    plt.legend()
+
     plt.show()
+
+    # Optional: Print or return features above the threshold
+    important_features = X_comb.columns[feature_importance >= threshold]
+    print("Features above 5% importance:\n\n", important_features.to_list())
+
+
