@@ -172,8 +172,10 @@ def plot_feature_importance(X_num, X_categ, y, n_estimators=250, random_state=42
 
     plt.show()
 
-    # Optional: Print or return features above the threshold
+    print(f"\nInitial Features: {len(X_comb.columns)}\n")
+    print(X_comb.columns.tolist())
     important_features = X_comb.columns[feature_importance >= threshold]
-    print("Features above 5% importance:\n\n", important_features.to_list())
+    print(f"\nFeatures above 5% importance: {len(important_features)}\n")
+    print(important_features.to_list())
 
 
