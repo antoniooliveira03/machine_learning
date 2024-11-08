@@ -72,7 +72,7 @@ def chi_squared(X, y, categ, threshold=0.05):
 from sklearn.feature_selection import mutual_info_classif
 import pandas as pd
 
-def select_features_by_mi(X, y, threshold=0.1):
+def mutual_info(X, y, threshold=0.1):
     
     # Calculate MI scores
     mi_scores = mutual_info_classif(X, y, random_state=0)
