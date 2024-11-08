@@ -69,6 +69,34 @@ def chi_squared(X, y, categ, threshold=0.05):
     print(non_selected_features[['Feature', 'Chi2 Score', 'p-value']])
 
 
+from sklearn.feature_selection import mutual_info_classif
+import pandas as pd
+
+def mutual_info(X, y, threshold=0.1):
+    
+    # Calculate MI scores
+    mi_scores = mutual_info_classif(X, y, random_state=0)
+    mi_scores_series = pd.Series(mi_scores, index=X.columns)
+    
+    # Select features based on the threshold
+    selected_features = mi_scores_series[mi_scores_series >= threshold].index.tolist()
+    
+    # Plot the MI scores for visualization
+    plt.figure(figsize=(10, 6))
+    mi_scores_series.sort_values(ascending=True).plot(kind='barh', color='skyblue')
+    plt.axvline(x=threshold, color='red', linestyle='--', label=f'Threshold = {threshold}')
+    plt.xlabel("Mutual Information Score")
+    plt.ylabel("Features")
+    plt.title("Mutual Information Scores for Features")
+    plt.legend()
+    plt.show()
+    
+    print(f"\nInitial Features: {len(X.columns.tolist())} \n")
+    print(X.columns.tolist())
+    print(f"\nDecision for Categorical Features (MI Score >= {threshold}): {len(selected_features)} \n")
+    print(selected_features)
+    
+
 
 from sklearn.feature_selection import RFE
 from sklearn.linear_model import LogisticRegression
