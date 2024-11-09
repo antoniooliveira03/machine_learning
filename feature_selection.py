@@ -2,11 +2,10 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 
-def correlation_matrix(X, num, cmap='Blues'):
-    X_num = X[num]
+def correlation_matrix(X, cmap='Blues'):
     
     # Compute the absolute correlation matrix
-    corr_matrix = X_num.corr().abs()
+    corr_matrix = X.corr().abs()
 
     # Plot the heatmap
     plt.figure(figsize=(12, 10))
@@ -18,8 +17,7 @@ def correlation_matrix(X, num, cmap='Blues'):
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.preprocessing import MinMaxScaler
 
-def chi_squared(X, y, categ, threshold=0.05):
-    X_categ = X[categ]
+def chi_squared(X_categ, y, threshold=0.05):
     
     # Scale the features
     scaler = MinMaxScaler()
@@ -161,17 +159,14 @@ def lasso(X, y, alpha = 0.01, color = 'lightblue'):
     print(selected_features.tolist())
 
 
-
 from sklearn.ensemble import ExtraTreesClassifier
 import matplotlib.pyplot as plt
 import numpy as np
 
 def plot_feature_importance(X_num, X_categ, y, n_estimators=250, random_state=42,
                             threshold=5):
-   
     # Concatenate scaled and categorical features
     X_comb = pd.concat([X_num, X_categ], axis=1)
-
 
     # Initialize the ExtraTreesClassifier with given parameters
     clf = ExtraTreesClassifier(n_estimators=n_estimators,
@@ -202,8 +197,16 @@ def plot_feature_importance(X_num, X_categ, y, n_estimators=250, random_state=42
 
     print(f"\nInitial Features: {len(X_comb.columns)}\n")
     print(X_comb.columns.tolist())
+
+    # Identify important features
     important_features = X_comb.columns[feature_importance >= threshold]
-    print(f"\nFeatures above 5% importance: {len(important_features)}\n")
-    print(important_features.to_list())
 
+    # Split important features into numerical and categorical
+    important_num_features = [f for f in important_features if f in X_num.columns]
+    important_categ_features = [f for f in important_features if f in X_categ.columns]
 
+    print("\nImportant Numerical Features:")
+    print(important_num_features)
+
+    print("\nImportant Categorical Features:")
+    print(important_categ_features)
