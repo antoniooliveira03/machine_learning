@@ -52,7 +52,7 @@ def chi_squared(X_categ, y, threshold=0.05):
 
     # Plot the Chi-squared scores
     plt.figure(figsize=(12, 8))
-    sns.barplot(x='Chi2 Score', y='Feature', data=scores_df.sort_values(by='Chi2 Score', ascending=False))
+    sns.barplot(x='Chi2 Score', y='Feature', data=scores_df.sort_values(by='Chi2 Score', ascending=False), color='orange')
     plt.axvline(x=threshold, color='red', linestyle='--', label=f'p-value Threshold = {threshold}')
     plt.title('Chi-squared Scores for Features')
     plt.xlabel('Chi-squared Score')
