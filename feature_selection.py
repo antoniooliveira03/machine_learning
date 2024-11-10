@@ -1,8 +1,16 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
+from sklearn.linear_model import Lasso
+from sklearn.feature_selection import SelectKBest, chi2
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.feature_selection import mutual_info_classif
+from sklearn.ensemble import ExtraTreesClassifier
+from sklearn.feature_selection import RFE
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report, f1_score
 
-def correlation_matrix(X, cmap='Blues'):
+def correlation_matrix(X, cmap='YlOrBr'):
     
     # Compute the absolute correlation matrix
     corr_matrix = X.corr().abs()
@@ -13,10 +21,6 @@ def correlation_matrix(X, cmap='Blues'):
     plt.title("Feature Correlation Matrix")
     plt.show()
 
-
-from sklearn.feature_selection import SelectKBest, chi2
-from sklearn.preprocessing import MinMaxScaler
-
 def chi_squared(X_categ, y, threshold=0.05):
     
     # Scale the features
@@ -24,7 +28,6 @@ def chi_squared(X_categ, y, threshold=0.05):
     X_scaled = pd.DataFrame(scaler.fit_transform(X_categ), 
                             columns=X_categ.columns)
     
-
     # Fit the chi-squared selector
     chi2_selector = SelectKBest(chi2, k='all')
     chi2_selector.fit(X_scaled, y)
@@ -49,7 +52,7 @@ def chi_squared(X_categ, y, threshold=0.05):
     # Plot the Chi-squared scores
     plt.figure(figsize=(12, 8))
     sns.barplot(x='Chi2 Score', y='Feature', data=scores_df.sort_values(by='Chi2 Score', ascending=False))
-    plt.axvline(x=threshold, color='r', linestyle='--', label=f'p-value Threshold = {threshold}')
+    plt.axvline(x=threshold, color='red', linestyle='--', label=f'p-value Threshold = {threshold}')
     plt.title('Chi-squared Scores for Features')
     plt.xlabel('Chi-squared Score')
     plt.ylabel('Features')
@@ -66,10 +69,6 @@ def chi_squared(X_categ, y, threshold=0.05):
     print("\nNon-Selected Features (p-value >= threshold):\n")
     print(non_selected_features[['Feature', 'Chi2 Score', 'p-value']])
 
-
-from sklearn.feature_selection import mutual_info_classif
-import pandas as pd
-
 def mutual_info(X, y, threshold=0.1):
     
     # Calculate MI scores
@@ -81,7 +80,7 @@ def mutual_info(X, y, threshold=0.1):
     
     # Plot the MI scores for visualization
     plt.figure(figsize=(10, 6))
-    mi_scores_series.sort_values(ascending=True).plot(kind='barh', color='skyblue')
+    mi_scores_series.sort_values(ascending=True).plot(kind='barh', color='orange')
     plt.axvline(x=threshold, color='red', linestyle='--', label=f'Threshold = {threshold}')
     plt.xlabel("Mutual Information Score")
     plt.ylabel("Features")
@@ -93,12 +92,6 @@ def mutual_info(X, y, threshold=0.1):
     print(X.columns.tolist())
     print(f"\nDecision for Categorical Features (MI Score >= {threshold}): {len(selected_features)} \n")
     print(selected_features)
-    
-
-
-from sklearn.feature_selection import RFE
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import classification_report, f1_score
 
 def rfe(X, y, n_features, model=None):
     
@@ -135,8 +128,8 @@ def rfe(X, y, n_features, model=None):
     
     return best_features
 
-from sklearn.linear_model import Lasso
-def lasso(X, y, alpha = 0.01, color = 'lightblue'):
+
+def lasso(X, y, alpha = 0.01, color = 'orange'):
     
     lasso = Lasso(alpha=alpha)
     lasso.fit(X, y)
@@ -157,11 +150,6 @@ def lasso(X, y, alpha = 0.01, color = 'lightblue'):
     print(X.columns.tolist())
     print(f"\nDecision for Numerical Features (lasso ≠ 0): {len(selected_features.tolist())}\n")
     print(selected_features.tolist())
-
-
-from sklearn.ensemble import ExtraTreesClassifier
-import matplotlib.pyplot as plt
-import numpy as np
 
 def plot_feature_importance(X_num, X_categ, y, n_estimators=250, random_state=42,
                             threshold=5):
