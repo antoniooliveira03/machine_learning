@@ -1,6 +1,16 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
+from sklearn.feature_selection import SelectKBest, chi2
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.feature_selection import mutual_info_classif
+from sklearn.feature_selection import RFE
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report, f1_score
+from sklearn.linear_model import Lasso
+from sklearn.ensemble import ExtraTreesClassifier
+import numpy as np
+
 
 def correlation_matrix(X, cmap='Blues'):
     
@@ -14,8 +24,6 @@ def correlation_matrix(X, cmap='Blues'):
     plt.show()
 
 
-from sklearn.feature_selection import SelectKBest, chi2
-from sklearn.preprocessing import MinMaxScaler
 
 def chi_squared(X_categ, y, threshold=0.05):
     
@@ -67,8 +75,6 @@ def chi_squared(X_categ, y, threshold=0.05):
     print(non_selected_features[['Feature', 'Chi2 Score', 'p-value']])
 
 
-from sklearn.feature_selection import mutual_info_classif
-import pandas as pd
 
 def mutual_info(X, y, threshold=0.1):
     
@@ -94,11 +100,6 @@ def mutual_info(X, y, threshold=0.1):
     print(f"\nDecision for Categorical Features (MI Score >= {threshold}): {len(selected_features)} \n")
     print(selected_features)
     
-
-
-from sklearn.feature_selection import RFE
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import classification_report, f1_score
 
 def rfe(X, y, n_features, model=None):
     
@@ -135,7 +136,7 @@ def rfe(X, y, n_features, model=None):
     
     return best_features
 
-from sklearn.linear_model import Lasso
+
 def lasso(X, y, alpha = 0.01, color = 'lightblue'):
     
     lasso = Lasso(alpha=alpha)
@@ -159,9 +160,6 @@ def lasso(X, y, alpha = 0.01, color = 'lightblue'):
     print(selected_features.tolist())
 
 
-from sklearn.ensemble import ExtraTreesClassifier
-import matplotlib.pyplot as plt
-import numpy as np
 
 def plot_feature_importance(X_num, X_categ, y, n_estimators=250, random_state=42,
                             threshold=5):
