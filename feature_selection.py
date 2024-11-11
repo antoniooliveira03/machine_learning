@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
+import numpy as np
 from sklearn.linear_model import Lasso
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.preprocessing import MinMaxScaler
@@ -51,7 +52,7 @@ def chi_squared(X_categ, y, threshold=0.05):
 
     # Plot the Chi-squared scores
     plt.figure(figsize=(12, 8))
-    sns.barplot(x='Chi2 Score', y='Feature', data=scores_df.sort_values(by='Chi2 Score', ascending=False))
+    sns.barplot(x='Chi2 Score', y='Feature', data=scores_df.sort_values(by='Chi2 Score', ascending=False), color='orange')
     plt.axvline(x=threshold, color='red', linestyle='--', label=f'p-value Threshold = {threshold}')
     plt.title('Chi-squared Scores for Features')
     plt.xlabel('Chi-squared Score')
@@ -173,7 +174,7 @@ def plot_feature_importance(X_num, X_categ, y, n_estimators=250, random_state=42
 
     # Plot feature importances
     plt.figure(figsize=(12, 8))
-    plt.barh(pos, feature_importance[sorted_idx], align='center')
+    plt.barh(pos, feature_importance[sorted_idx], align='center', color = 'orange')
     plt.yticks(pos, X_comb.columns[sorted_idx])
     plt.xlabel('Relative Importance')
     plt.title('Feature Importance Using ExtraTreesClassifier')
