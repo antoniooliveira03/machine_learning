@@ -30,11 +30,11 @@ def plot_numeric_histograms(df, n_cols = 3):
 
 
 
-def plot_histogram_by_category(df, categorical_column, rotation = 45):
+def plot_histogram(df, column, rotation = 45):
     plt.figure(figsize=(10, 6))
-    sns.histplot(df[categorical_column], discrete=True, color='orange', kde=False)
-    plt.title(f'Histogram of {categorical_column}', fontsize=14)
-    plt.xlabel(categorical_column)
+    sns.histplot(df[column], discrete=True, color='orange', kde=False)
+    plt.title(f'Histogram of {column}', fontsize=14)
+    plt.xlabel(column)
     plt.ylabel('Frequency')
     plt.xticks(rotation=rotation)
     plt.show()
