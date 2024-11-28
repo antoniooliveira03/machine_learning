@@ -38,3 +38,22 @@ def plot_histogram(df, column, rotation = 45):
     plt.ylabel('Frequency')
     plt.xticks(rotation=rotation)
     plt.show()
+
+
+
+def plot_pairwise_relationship(df):
+    # Select only numerical columns
+    num_columns = df.select_dtypes(include=['number']).columns
+
+    # Create a pairplot with only the lower triangle
+    g = sns.pairplot(df[num_columns], kind='scatter', 
+                 hue=None, plot_kws={'s': 10, 'color': 'orange'}, 
+                 corner=True) 
+    
+    # Update the diagonal plots to be orange
+    for ax in g.diag_axes:
+        for patch in ax.patches:
+            patch.set_facecolor('orange')
+
+        
+    plt.show()
