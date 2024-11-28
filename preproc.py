@@ -39,9 +39,11 @@ def ball_tree_impute(df, target, n_neighbors=5):
 
 ## Outliers
 
+
 def detect_outliers_iqr(df, missing_threshold):
     missing_col = []
     outliers_indices = set()
+    bounds = {}  
     
     for column in df.select_dtypes(include=[np.number]).columns:
         Q1 = df[column].quantile(0.25)
@@ -49,6 +51,9 @@ def detect_outliers_iqr(df, missing_threshold):
         IQR = Q3 - Q1
         lower_bound = Q1 - 1.5 * IQR
         upper_bound = Q3 + 1.5 * IQR
+        
+        # Store the bounds
+        bounds[column] = {'lower_bound': lower_bound, 'upper_bound': upper_bound}
         
         # Identify outliers
         outlier_data = df[(df[column] < lower_bound) | (df[column] > upper_bound)]
@@ -65,7 +70,7 @@ def detect_outliers_iqr(df, missing_threshold):
         
         # Boxplot for each column
         plt.figure(figsize=(8, 6))
-        sns.boxplot(data=df, x=column, color='skyblue', showfliers=False)  # Base boxplot without showing outliers
+        sns.boxplot(data=df, x=column, color='orange', showfliers=False)  
         sns.stripplot(
             data=outlier_data, 
             x=column, 
@@ -79,3 +84,5 @@ def detect_outliers_iqr(df, missing_threshold):
     
     print(f'Columns with more than {missing_threshold}% Outliers:')        
     print(missing_col)
+    
+    return bounds  
