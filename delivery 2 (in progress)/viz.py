@@ -1,6 +1,10 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
+from collections import Counter
+from wordcloud import WordCloud
+
+
 
 def plot_numeric_histograms(df, n_cols = 3):
     
@@ -117,4 +121,32 @@ def plot_cat_vs_num(df, categorical_column, numerical_column, plot_type="box"):
                     palette=palette, order=category_order)
         
     plt.title(f'{categorical_column} vs {numerical_column}')
+    plt.show()
+
+
+
+def generate_wordcloud(df, column_name, title='Word Cloud', width=800, height=400, colormap='Oranges', background_color='white', max_words=None):
+    # Step 1: Combine all text in the specified column into a single string
+    all_text = " ".join(df[column_name].astype(str).tolist()).lower()
+    
+    # Step 2: Tokenize the text
+    words = all_text.split()
+
+    # Step 3: Count the word frequencies
+    word_counts = Counter(words)
+
+    # Step 4: Generate the word cloud
+    wordcloud = WordCloud(
+        width=width,
+        height=height,
+        background_color=background_color,
+        colormap=colormap,
+        max_words=max_words
+    ).generate_from_frequencies(word_counts)
+
+    # Step 5: Display the word cloud
+    plt.figure(figsize=(10, 5))
+    plt.imshow(wordcloud, interpolation='bilinear')
+    plt.axis('off')
+    plt.title(title, fontsize=16)
     plt.show()
