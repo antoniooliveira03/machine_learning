@@ -105,6 +105,47 @@ def ball_tree_impute(dfs, target, n_neighbors=5):
         df[target] = df[target].combine_first(imputed_values)
 
 
+def fill_missing_times(df, cols):
+    
+    df['Accident Date'] = pd.to_datetime(
+        df['Accident Date Year'].astype(str) + '-' +
+        df['Accident Date Month'].astype(str).str.zfill(2) + '-' + 
+        df['Accident Date Day'].astype(str).str.zfill(2),
+        errors='coerce'
+    )
+    
+    df['Assembly Date'] = pd.to_datetime(
+        df['Assembly Date Year'].astype(str) + '-' +
+        df['Assembly Date Month'].astype(str).str.zfill(2) + '-' +
+        df['Assembly Date Day'].astype(str).str.zfill(2),
+        errors='coerce'
+    )
+    
+    df['C-2 Date'] = pd.to_datetime(
+        df['C-2 Date Year'].astype(str) + '-' +
+        df['C-2 Date Month'].astype(str).str.zfill(2) + '-' +
+        df['C-2 Date Day'].astype(str).str.zfill(2),
+        errors='coerce'
+    )
+    
+    
+    for col in cols:
+        if col == 'Accident to Assembly Time':
+            df['Accident to Assembly Time'] = df['Accident to Assembly Time'].fillna(
+                (df['Assembly Date'] - df['Accident Date']).dt.days)
+
+        if col == 'Assembly to C-2 Time':
+            df['Assembly to C-2 Time'] = df['Assembly to C-2 Time'].fillna(
+                (df['Assembly Date'] - df['C-2 Date']).dt.days)
+
+        if col == 'Accident to C-2 Time':
+            df['Accident to C-2 Time'] = df['Accident to C-2 Time'].fillna(
+                (df['C-2 Date'] - df['Assembly Date']).dt.days)
+
+    df.drop(['Accident Date', 'Assembly Date', 'C-2 Date'], axis = 1, inplace = True)        
+            
+    return df
+
 
 ## Outliers
 
