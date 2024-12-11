@@ -7,3 +7,6 @@
 .ipynb_checkpoints/01_Group24_Preproc-Copy2-checkpoint.ipynb
 delivery 2 (in progress)/pred/all_feat_xgb_3f.png
 *.png
+*.pkl
+*.pickle
+*gz
