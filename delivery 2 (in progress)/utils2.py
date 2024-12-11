@@ -4,6 +4,48 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+
+## ENCODE
+
+from sklearn.preprocessing import OneHotEncoder
+def encode(train, val, test, column, type_):
+    
+    if type_ == 'count':
+        new_column = column + ' Enc'  
+
+        # Count encoding based on training data
+        freq = train[column].value_counts()
+        train[new_column] = train[column].map(freq).astype(int)
+        val[new_column] = val[column].map(freq).astype(int)
+        test[new_column] = test[column].map(freq).astype(int)
+        
+    elif type_ == 'OHE':
+        encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+        
+        # Fit on the training data and transform all datasets
+        train_encoded = encoder.fit_transform(train[[column]])
+        val_encoded = encoder.transform(val[[column]])
+        test_encoded = encoder.transform(test[[column]])
+        
+        # Get new column names
+        ohe_columns = [f"{column}_{category}" for category in encoder.categories_[0]]
+
+        # Convert encoded arrays to DataFrames, drop the first column and convert to integers in one step
+        train_ohe = pd.DataFrame(train_encoded, columns=ohe_columns, index=train.index).iloc[:, 1:].astype(int)
+        val_ohe = pd.DataFrame(val_encoded, columns=ohe_columns, index=val.index).iloc[:, 1:].astype(int)
+        test_ohe = pd.DataFrame(test_encoded, columns=ohe_columns, index=test.index).iloc[:, 1:].astype(int)
+
+        
+        # Append the encoded columns back to the original DataFrames
+        train = pd.concat([train, train_ohe], axis=1)
+        val = pd.concat([val, val_ohe], axis=1)
+        test = pd.concat([test, test_ohe], axis=1)
+        
+    return train, val, test
+
+
+## FILL
+
 def fill_dates(train_df, other_dfs, feature_prefix):
 
     # Define column names
@@ -147,7 +189,7 @@ def fill_missing_times(df, cols):
     return df
 
 
-## Outliers
+## OUTLIERS
 
 
 def detect_outliers_iqr(df, missing_threshold):
