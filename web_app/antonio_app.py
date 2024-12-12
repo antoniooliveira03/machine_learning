@@ -93,10 +93,18 @@ if selected == "Inputs and Prediction":
             birth_year = st.slider(
                 "Worker Birth Year",
                 1944,
-                2006,
+                2020,
                 1980,
                 help="Year of the worker's birth.",
             )
+
+            gender = st.radio(
+                "Gender",
+                ["M", "F", 'U/X'],
+                horizontal=True,
+                help="Indicate the gender of the worker.",
+            )
+
         with col2:
             avg_weekly_wage = st.number_input(
                 "Average Weekly Wage (USD)",
@@ -105,8 +113,24 @@ if selected == "Inputs and Prediction":
                 help="Enter the average weekly wage of the worker.",
             )
 
+            zip_code = st.slider(
+                "Zip Code",
+                0,
+                100,
+                2,
+                help="Zip code of the worker.",
+            )
+
+            n_dependents = st.slider(
+                "Number of Dependents",
+                0,
+                100,
+                2,
+                help="Number of dependents of the worker.",
+            )
+
     with st.expander("Incident Details"):
-        col1, col2 = st.columns(2)
+        col1, col2, col3, col4 = st.columns(4)
         with col1:
             accident_year = st.slider(
                 "Accident Year", 1966, 2021, 2015, help="Year of the accident."
@@ -114,16 +138,64 @@ if selected == "Inputs and Prediction":
             accident_month = st.slider(
                 "Accident Month", 1, 12, 6, help="Month of the accident."
             )
-        with col2:
+
+            accident_day = st.slider(
+                "Accident Day", 1, 31, 6, help="Day of the accident."
+            )
+
             part_of_body = st.selectbox(
                 "Part of Body Injured",
                 list(part_of_body_mapping.keys()),
                 help="Select the injured body part.",
             )
+
+        with col2:
+            assembly_year = st.slider(
+                "Assembly Year", 1966, 2021, 2015, help="Year of the assembly."
+            )
+            assembly_month = st.slider(
+                "Assembly Month", 1, 12, 6, help="Month of the assembly."
+            )
+
+            assembly_day = st.slider(
+                "Assembly Day", 1, 31, 6, help="Day of the assembly."
+            )
+
             cause_injury = st.selectbox(
                 "Cause of Injury",
                 list(cause_of_injury_mapping.keys()),
                 help="Select the cause of injury.",
+            )
+
+        with col3:
+            c2_year = st.slider(
+                "C-2 Year", 1966, 2021, 2015, help="Year of the C-2."
+            )
+            c2_month = st.slider(
+                "C-2 Month", 1, 12, 6, help="Month of the C-2."
+            )
+
+            c2_day = st.slider(
+                "C-2 Day", 1, 31, 6, help="Day of the C-2."
+            )
+
+            covid = st.radio(
+                "Covid-19?",
+                ["Yes", "No"],
+                horizontal=True,
+                help="Indicate if the claim is related to Covid-19.",
+            )
+
+        with col4:
+            c3_year = st.slider(
+                "C-3 Year", 1966, 2021, 2015, help="Year of the C-3."
+            )
+            c3_month = st.slider(
+                "C-3 Month", 1, 12, 6, help="Month of the C-3."
+            )
+
+            c3_day = st.slider(
+                "C-3 Day", 1, 31, 6, help="Day of the C-3."
             )
 
     with st.expander("Administrative Information"):
@@ -141,11 +213,44 @@ if selected == "Inputs and Prediction":
                 ],
                 help="Select the insurance carrier handling the claim.",
             )
+
+            carrier_type = st.selectbox(
+                "Carrier Type",
+                [
+                    "1"
+                ],
+                help="Select the carrier type.",
+            )
+
+            county = st.selectbox(
+                "County of Injury",
+                [
+                    "1"
+                ],
+                help="Select the county where the injury occurred.",
+            )
+
+            district = st.selectbox(
+                "District Name",
+                [
+                    "1"
+                ],
+                help="Select the district of the incident.",
+            )
+
+
             attorney = st.radio(
                 "Claim Represented by Attorney?",
                 ["Yes", "No"],
                 horizontal=True,
                 help="Indicate if the claim is represented by an attorney.",
+            )
+
+            alternative_dispute = st.radio(
+                "Alternative Dispute Resolution?",
+                ["Yes", "No"],
+                horizontal=True,
+                help="Indicate if alternative dispute resolution is applicable.",
             )
         with col2:
             first_hearing_year = st.slider(
@@ -155,6 +260,22 @@ if selected == "Inputs and Prediction":
                 2022,
                 help="Year of the first hearing.",
             )
+
+            first_hearing_month = st.slider(
+                "First Hearing Month",
+                1,
+                12,
+                3,
+                help="Month of the first hearing.",
+            )
+
+            first_hearing_day = st.slider(
+                "First Hearing Day",
+                1,
+                31,
+                12,
+                help="Day of the first hearing.",
+            )
             ime_4_count = st.number_input(
                 "IME-4 Forms Received Count",
                 min_value=0,
@@ -163,30 +284,71 @@ if selected == "Inputs and Prediction":
                 help="Number of IME-4 forms received.",
             )
 
-    # Manual frequency encoding for 'Carrier Name'
-    carrier_name_freq = encode_carrier_name(carrier_name)
+    # Additional Inputs
+    with st.expander("Additional Information"):
+        C_2_day = st.slider(
+            "In which day did you receive the Employer's Report of Work-Related Injury/Illness",
+            1,
+            31,
+            1,
+        )
 
-    # Encode categorical features
-    cause_injury_encoded = cause_of_injury_mapping[cause_injury]
-    part_of_body_encoded = part_of_body_mapping[part_of_body]
+        indust_code_descript = st.selectbox(
+            "Industry Description",
+            ["1"],
+            help = 'None'
+        )
 
-    # Display user inputs
+        cause = st.selectbox(
+            "Cause of Injury Description",
+            ["1"],
+            help = 'None'
+        )
+
+        nature_description = st.selectbox(
+            "Nature of Injury Description",
+            ["1"],
+            help = 'None'
+        )
+
+
+    # Collecting all inputs into the input_df dictionary
     st.subheader("Your Inputs")
     input_data = {
         "Birth Year": birth_year,
+        "Gender": gender,
         "Average Weekly Wage": avg_weekly_wage,
+        "Zip Code": zip_code,
+        "Number of Dependents": n_dependents,
         "Accident Year": accident_year,
         "Accident Month": accident_month,
-        "WCIO Part Of Body Code": part_of_body_encoded,
-        "WCIO Cause of Injury Code": cause_injury_encoded,
-        "Carrier Name freq": carrier_name_freq,
+        "Accident Day": accident_day,
+        "Part of Body Injured": part_of_body,
+        "Cause of Injury": cause_injury,
+        "Assembly Year": assembly_year,
+        "Assembly Month": assembly_month,
+        "Assembly Day": assembly_day,
+        "C-2 Year": c2_year,
+        "C-2 Month": c2_month,
+        "C-2 Day": c2_day,
+        "C-3 Year": c3_year,
+        "C-3 Month": c3_month,
+        "C-3 Day": c3_day,
+        "Covid": covid,
+        "Carrier Name": carrier_name,
+        "Carrier Type": carrier_type,
+        "County": county,
+        "District": district,
         "Attorney/Representative Bin": 1 if attorney == "Yes" else 0,
+        "Alternative Dispute Resolution": 1 if alternative_dispute == "Yes" else 0,
         "First Hearing Year": first_hearing_year,
-        "IME-4 Count Log": np.log1p(ime_4_count),
-        "C-3 Date Binary": 1,  # Placeholder
-        "Industry Code": 1,  # Placeholder
-        "WCIO Nature of Injury Code": 1,  # Placeholder
-        "C-2 Day": 1,  # Placeholder
+        "First Hearing Month": first_hearing_month,
+        "First Hearing Day": first_hearing_day,
+        "IME-4 Count": ime_4_count,
+        "C-2 Day": C_2_day,
+        "Industry Description": indust_code_descript,
+        "Cause Description": cause,
+        "Nature Description": nature_description,
     }
 
     input_df = pd.DataFrame(input_data, index=[0])
@@ -204,10 +366,3 @@ if selected == "Inputs and Prediction":
         prediction = p.preproc_(csv_path)
         st.subheader("Prediction Result")
         st.write(f"The predicted compensation benefit is: {prediction}")
-
-
-# Model Data Page
-if selected == "Model Data":
-    st.title("Model Data and Insights")
-    st.markdown("View model's performance, confusion matrix, and more.")
-    st.info("No model data available. This page is a placeholder.")
