@@ -94,7 +94,8 @@ def mutual_info(X, y, threshold=0.1):
     print(f"\nDecision for Categorical Features (MI Score >= {threshold}): {len(selected_features)} \n")
     print(selected_features)
 
-def rfe(X, y, n_features, model=None):
+
+def rfe(X_train, y_train, X_val, y_val, n_features, model=None):
     
     best_score = 0
     best_features = []
@@ -105,26 +106,34 @@ def rfe(X, y, n_features, model=None):
         
         # Perform RFE to select features
         rfe = RFE(estimator=model, n_features_to_select=feature)
-        rfe.fit(X, y)
+        rfe.fit(X_train, y_train)
 
         # Get selected features
-        selected_features = X.columns[rfe.support_]
+        selected_features = X_train.columns[rfe.support_]
         
+        print('-------------TRAIN-------------')
         # Model predictions and classification report on the training set with selected features
-        y_pred = rfe.predict(X)
+        y_pred = rfe.predict(X_train)
         print(f"Classification Report for {feature} features:\n")
-        print(classification_report(y, y_pred))
+        print(classification_report(y_train, y_pred))
         
         # Calculate the macro average F1 score
-        macro_f1 = f1_score(y, y_pred, average='macro')
+        macro_f1 = f1_score(y_train, y_pred, average='macro')
         print(f"Macro Avg F1 Score for {feature} features: {macro_f1:.4f}\n")
         
-        # Store the results
-        results[feature] = selected_features
+        print('----------VALIDATION----------')
+        # Model predictions and classification report on the training set with selected features
+        y_val_pred = rfe.predict(X_val)
+        print(f"Classification Report for {feature} features:\n")
+        print(classification_report(y_val, y_val_pred))
+        
+        # Calculate the macro average F1 score
+        macro_f1_val = f1_score(y_val, y_val_pred, average='macro')
+        print(f"Macro Avg F1 Score for {feature} features: {macro_f1_val:.4f}\n")
         
         # Check if this is the best score
-        if macro_f1 > best_score:
-            best_score = macro_f1
+        if macro_f1_val > best_score:
+            best_score = macro_f1_val
             best_features = selected_features.tolist()  
     
     return best_features
