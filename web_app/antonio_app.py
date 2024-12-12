@@ -3,9 +3,41 @@ from streamlit_option_menu import option_menu
 from PIL import Image
 import pandas as pd
 import numpy as np
+import preproc as p
 
 # Load the logo
-img = Image.open("24_Nexus_Analytics.png")
+#img = Image.open("24_Nexus_Analytics.png")
+
+### TEMP
+# Manual frequency encoding for 'Carrier Name'
+def encode_carrier_name(carrier_name):
+    carrier_name_freq_map = {
+        "NEW HAMPSHIRE INSURANCE CO": 0.05,
+        "ZURICH AMERICAN INSURANCE CO": 0.10,
+        "INDEMNITY INSURANCE CO OF": 0.07,
+        "MARATHON CENTRAL SCHOOL DIST": 0.02,
+        "CAMBRIDGE CENTRAL SCHOOL": 0.04,
+        "HERMON-DEKALB CENTRAL": 0.03,
+    }
+    return carrier_name_freq_map.get(carrier_name, 0)  # Default to 0 if unknown
+
+
+# Encoding for "WCIO Cause of Injury Code"
+cause_of_injury_mapping = {
+    "Liquid Spills": 1,
+    "Repetitive Motion": 2,
+    "Lifting": 3,
+    "Other": 4,
+}
+
+# Encoding for "Part of Body Injured"
+part_of_body_mapping = {
+    "Hand": 1,
+    "Back": 2,
+    "Foot": 3,
+    "Head": 4,
+    "Other": 5,
+}
 
 # Define the navigation menu
 def streamlit_menu():
@@ -50,7 +82,7 @@ if selected == "Home":
 if selected == "Inputs and Prediction":
     st.title("Predict Compensation Benefit")
     st.markdown(
-        "Provide the necessary details below to simulate a prediction."
+        "Provide the necessary details below to predict whether a compensation benefit will be granted."
     )
 
     # Input fields grouped logically
@@ -85,12 +117,12 @@ if selected == "Inputs and Prediction":
         with col2:
             part_of_body = st.selectbox(
                 "Part of Body Injured",
-                ["Hand", "Back", "Foot", "Head", "Other"],
+                list(part_of_body_mapping.keys()),
                 help="Select the injured body part.",
             )
             cause_injury = st.selectbox(
                 "Cause of Injury",
-                ["Liquid Spills", "Repetitive Motion", "Lifting", "Other"],
+                list(cause_of_injury_mapping.keys()),
                 help="Select the cause of injury.",
             )
 
@@ -131,6 +163,13 @@ if selected == "Inputs and Prediction":
                 help="Number of IME-4 forms received.",
             )
 
+    # Manual frequency encoding for 'Carrier Name'
+    carrier_name_freq = encode_carrier_name(carrier_name)
+
+    # Encode categorical features
+    cause_injury_encoded = cause_of_injury_mapping[cause_injury]
+    part_of_body_encoded = part_of_body_mapping[part_of_body]
+
     # Display user inputs
     st.subheader("Your Inputs")
     input_data = {
@@ -138,19 +177,34 @@ if selected == "Inputs and Prediction":
         "Average Weekly Wage": avg_weekly_wage,
         "Accident Year": accident_year,
         "Accident Month": accident_month,
-        "Part of Body Injured": part_of_body,
-        "Cause of Injury": cause_injury,
-        "Carrier Name": carrier_name,
-        "Attorney Representation": attorney,
+        "WCIO Part Of Body Code": part_of_body_encoded,
+        "WCIO Cause of Injury Code": cause_injury_encoded,
+        "Carrier Name freq": carrier_name_freq,
+        "Attorney/Representative Bin": 1 if attorney == "Yes" else 0,
         "First Hearing Year": first_hearing_year,
-        "IME-4 Count": ime_4_count,
+        "IME-4 Count Log": np.log1p(ime_4_count),
+        "C-3 Date Binary": 1,  # Placeholder
+        "Industry Code": 1,  # Placeholder
+        "WCIO Nature of Injury Code": 1,  # Placeholder
+        "C-2 Day": 1,  # Placeholder
     }
-    st.write(pd.DataFrame([input_data]))
+
+    input_df = pd.DataFrame(input_data, index=[0])
+
+    st.write(input_df)
 
     # Placeholder for prediction button
     st.subheader("Prediction")
     if st.button("Predict"):
-        st.info("Prediction logic is not implemented yet. This is a placeholder.")
+        csv_path = "user_inputs.csv"
+        input_df.to_csv(csv_path, index=False)
+        st.success(f"User inputs saved to {csv_path}")
+
+        # Call the preprocessing and prediction function
+        prediction = p.preproc_(csv_path)
+        st.subheader("Prediction Result")
+        st.write(f"The predicted compensation benefit is: {prediction}")
+
 
 # Model Data Page
 if selected == "Model Data":
