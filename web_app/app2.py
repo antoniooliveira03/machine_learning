@@ -6,6 +6,7 @@ import gzip
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import plotly_express as px
 import seaborn as sns
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from sklearn.ensemble import RandomForestClassifier
@@ -14,8 +15,11 @@ from predict import show_predict
 
 
 # Load the logo
-img = Image.open("24_Nexus_Analytics.png")
-logo = Image.open("Nova_IMS.png")
+img = Image.open("web_app/24_Nexus_Analytics.png")
+logo = Image.open("web_app/Nova_IMS.png")
+
+#load Data for vizualizations 
+df= pd.read_csv("web_app/train_data_EDA.csv")
 
 # Define the navigation menu
 def streamlit_menu():
@@ -104,9 +108,23 @@ if selected == "Inputs and Prediction":
     # Run the function of Predictions
     show_predict()
 
-#Explore Data Page 
+# Explore Data Page 
 if selected == "Explore Data":
     st.title("Model Data and Insights")
     st.markdown("View model's performance, confusion matrix, and more.")
 
-    #Run the Function of Explore Data 
+    
+    # Create the list of numeric features 
+    numeric_features = ['Age at Injury', 'Average Weekly Wage', 'Birth Year', 'IME-4 Count','Industry Code','WCIO Cause of Injury Code', 'WCIO Nature of Injury Code', 'WCIO Part Of Body Code', 'Number of Dependents']
+    
+    # Defining and calling the function for an interactive scatterplot
+    def interactive_scater (dataframe):
+        x_axis_val = st.selectbox('Select X-Axis Value', options=numeric_features)
+        y_axis_val = st.selectbox('Select Y-Axis Value', options=numeric_features)
+        col = st.color_picker('Select a plot colour')
+
+        plot  = px.scatter(dataframe, x=x_axis_val, y=y_axis_val)
+        plot.update_traces(marker = dict(color=col))
+        st.plotly_chart(plot)
+
+    interactive_scater (df)
