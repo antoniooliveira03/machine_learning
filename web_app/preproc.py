@@ -10,15 +10,13 @@ def preproc_(path):
 
     st.text("Processing your input data...")
 
-    return 100
     # List of columns to convert to datetime
-    #date_columns = ['Accident Date', 'Assembly Date', 'C-2 Date', 'C-3 Date', 'First Hearing Date']
+    date_columns = ['Accident Date', 'Assembly Date', 'C-2 Date', 'C-3 Date', 'First Hearing Date']
 
     # Apply pd.to_datetime() to each column in the list for both df and test
-    #for col in date_columns:
-    #    user_input[col] = pd.to_datetime(user_input[col], errors='coerce')
+    for col in date_columns:
+        user_input[col] = pd.to_datetime(user_input[col], errors='coerce')
 
-'''
     mapping = {
     '5D. SPECIAL FUND - UNKNOWN': '5. SPECIAL FUND OR UNKNOWN',
     '5A. SPECIAL FUND - CONS. COMM. (SECT. 25-A)': '5. SPECIAL FUND OR UNKNOWN',
@@ -90,5 +88,3 @@ def preproc_(path):
     user_input.drop(columns = drop, axis = 1, inplace = True)
 
     return print('its working')
-
-'''
