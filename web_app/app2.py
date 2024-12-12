@@ -111,7 +111,7 @@ if selected == "Inputs and Prediction":
 # Explore Data Page 
 if selected == "Explore Data":
     st.title("Model Data and Insights")
-    st.markdown("View model's performance, confusion matrix, and more.")
+    st.subheader("Analyse the pairwise relation between the numerical features")
 
     
     # Create the list of numeric features 
@@ -128,3 +128,42 @@ if selected == "Explore Data":
         st.plotly_chart(plot)
 
     interactive_scater (df)
+
+    st.divider()
+
+    st.subheader("Analyse the histograms agains the Claim Injury Type") #este n faz sentido dar check
+
+    def interactive_hist (dataframe):
+        claim_injury_type_mapping = {
+                1: "CANCELLED",
+                2: "NON-COMP",
+                3: "MED ONLY",
+                4: "TEMPORARY",
+                5: "PPD SCH LOSS",
+                6: "PPD NSL",
+                7: "PTD",
+                8: "DEATH" }
+
+        df["Claim Injury Type"] = df["Claim Injury Type"].map(claim_injury_type_mapping)
+        target_feature = ['Claim Injury Type']
+
+        exclude_columns = ["Claim Identifier", "Claim Identifier"]
+        filtered_columns = [col for col in df.columns if col not in exclude_columns]
+
+         
+        selected_feature = st.selectbox('Select a Feature for Histogram', options=filtered_columns)
+    
+       
+        if pd.api.types.is_numeric_dtype(dataframe[selected_feature]):
+            # Plot numeric histogram
+            fig = px.histogram(dataframe, x=selected_feature, y="Claim Injury Type", color="Claim Injury Type", barmode="group")
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            # Plot categorical histogram
+            fig = px.histogram(dataframe, x=selected_feature, y="Claim Injury Type", color="Claim Injury Type", barmode="group")
+            st.plotly_chart(fig, use_container_width=True)
+
+    
+    interactive_hist(df)
+
+
