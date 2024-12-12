@@ -1,14 +1,16 @@
 import pandas as pd
 import utils as u
 import streamlit as st
+import datetime
 
 
 def preproc_(path):
     
-
     user_input = pd.read_csv(path)
 
     st.text("Processing your input data...")
+
+    user_input['Age at Injury'] = 2024 - user_input['Birth Year']
 
     # List of columns to convert to datetime
     date_columns = ['Accident Date', 'Assembly Date', 'C-2 Date', 'C-3 Date', 'First Hearing Date']
@@ -26,10 +28,10 @@ def preproc_(path):
     user_input['Carrier Type'] = user_input['Carrier Type'].replace(mapping)
 
     mapping = {  
-    'M': 'M',
-    'F': 'F',
-    'U': 'U/X',  
-    'X': 'U/X' }
+        'M': 'M',
+        'F': 'F',
+        'U': 'U/X',  
+        'X': 'U/X' }
 
     user_input['Gender'] = user_input['Gender'].map(mapping)  
 
@@ -39,10 +41,6 @@ def preproc_(path):
     for column in user_input.columns:
         # Check if the column is a datetime type
         if pd.api.types.is_datetime64_any_dtype(user_input[column]) and column not in ['C-3 Date', 'First Hearing Date']:
-            # Extract year, month, and day user_input create new columns
-            user_input[f'{column} Year'] = user_input[column].dt.year
-            user_input[f'{column} Month'] = user_input[column].dt.month
-            user_input[f'{column} Day'] = user_input[column].dt.day
             user_input[f'{column} Day of Week'] = user_input[column].dt.weekday 
 
     user_input['Accident to Assembly Time'] = (user_input['Assembly Date'] - user_input['Accident Date']).dt.days
@@ -80,11 +78,10 @@ def preproc_(path):
     user_input['Age Group'] = pd.cut(user_input['Age at Injury'], 
                                     bins=bins, labels=labels, right=True)
     
-    drop = ['Accident Date', 'Assembly Date', 'Industry Code Description',
-        'C-2 Date', 'Zip Code', 'WCIO Cause of Injury Description',
-        'WCIO Nature of Injury Description', 'WCIO Part Of Body Description']
+    drop = ['Accident Date', 'Assembly Date',
+        'C-2 Date', 'Zip Code']
     
 
     user_input.drop(columns = drop, axis = 1, inplace = True)
 
-    return print('its working')
+    return 101
