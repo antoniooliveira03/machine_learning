@@ -157,10 +157,10 @@ if selected == "Explore Data":
         target_var = dataframe['Claim Injury Type']
     
         # Create a dropdown for selecting numeric features
-        target_hist = st.selectbox('Feature', options=numeric_features)
+        target_hist = st.selectbox('Feature', options=numeric_features, key="numeric_feature_hist")
     
         # Create a dropdown for selecting the number of bins
-        bin_count = st.slider('Select number of bins', min_value=5, max_value=100, value=30)
+        bin_count = st.slider('Select number of bins', min_value=5, max_value=100, value=30, key="bin_slider")
 
         color_palette = "inferno"
 
