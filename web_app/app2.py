@@ -20,6 +20,7 @@ logo = Image.open("web_app/Nova_IMS.png")
 
 #load Data for vizualizations 
 df= pd.read_csv("web_app/train_data_EDA.csv")
+county_df = pd.read_csv("web_app/geo_county.csv")
 
 # Define the navigation menu
 def streamlit_menu():
@@ -130,40 +131,68 @@ if selected == "Explore Data":
     interactive_scater (df)
 
     st.divider()
-
-    st.subheader("Analyse the histograms agains the Claim Injury Type") #este n faz sentido dar check
+    
+    #Creating Hist of numerical
+    st.subheader("Analyse the histograms of Numerical features") 
 
     def interactive_hist (dataframe):
-        claim_injury_type_mapping = {
-                1: "CANCELLED",
-                2: "NON-COMP",
-                3: "MED ONLY",
-                4: "TEMPORARY",
-                5: "PPD SCH LOSS",
-                6: "PPD NSL",
-                7: "PTD",
-                8: "DEATH" }
+        box_hist = st.selectbox('Feature', options=numeric_features)
+        color_choice = st.color_picker('Select a plot colour', '#1f77b4')
+        bin_count = st.slider('Select number of bins', min_value=5, max_value=100, value=20, step=1)
 
-        df["Claim Injury Type"] = df["Claim Injury Type"].map(claim_injury_type_mapping)
-        target_feature = ['Claim Injury Type']
+        hist  = sns.displot(dataframe[box_hist], color=color_choice, bins=bin_count)
+        
+        plt.title(f"Histogram of {box_hist}")
+        st.pyplot(hist)
 
-        exclude_columns = ["Claim Identifier", "Claim Identifier"]
-        filtered_columns = [col for col in df.columns if col not in exclude_columns]
-
-         
-        selected_feature = st.selectbox('Select a Feature for Histogram', options=filtered_columns)
-    
-       
-        if pd.api.types.is_numeric_dtype(dataframe[selected_feature]):
-            # Plot numeric histogram
-            fig = px.histogram(dataframe, x=selected_feature, y="Claim Injury Type", color="Claim Injury Type", barmode="group")
-            st.plotly_chart(fig, use_container_width=True)
-        else:
-            # Plot categorical histogram
-            fig = px.histogram(dataframe, x=selected_feature, y="Claim Injury Type", color="Claim Injury Type", barmode="group")
-            st.plotly_chart(fig, use_container_width=True)
-
-    
+        
     interactive_hist(df)
 
+    st.divider()
+    
+    st.subheader("Numerical features against Target Variable (Claim Injury Type)")
 
+    def hist_target(dataframe):
+        # Reverse the encoding in the target column
+        target_var = dataframe['Claim Injury Type']
+    
+        # Create a dropdown for selecting numeric features
+        target_hist = st.selectbox('Feature', options=numeric_features)
+    
+        # Create a dropdown for selecting the number of bins
+        bin_count = st.slider('Select number of bins', min_value=5, max_value=100, value=30)
+
+        color_palette = "inferno"
+
+        # Plot the histogram
+        plt.figure(figsize=(10, 6))
+        sns.histplot(data=dataframe, x=target_hist, hue="Claim Injury Type", kde=True, bins=bin_count, palette=color_palette)
+        plt.title(f"Distribution of {target_hist} by Claim Injury Type")
+        st.pyplot(plt)
+    
+    hist_target(df)
+
+    st.divider()
+    
+    #Creating the map of County
+    st.subheader("Map of County Injury")
+    st.markdown("his map visualizes the frequency of injuries reported across various New York counties. Each point on the map represents a county, hover over the points to see more details about each one of them.")
+    
+    
+    def dysplay_map (Dataframe):
+
+        fig = px.scatter_mapbox(Dataframe, lat ='Latitude',lon='Longitude', 
+                                color="Frequency", color_continuous_scale=px.colors.sequential.Inferno, zoom=3
+                                )
+        
+        fig.update_layout(mapbox_style='open-street-map')
+
+        st.plotly_chart(fig)
+    
+    dysplay_map(county_df)
+    
+    
+    
+    
+
+   
