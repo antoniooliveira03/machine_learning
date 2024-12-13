@@ -48,7 +48,7 @@ if selected == "Home":
     """)
 
     # Display the logo below the team section
-    st.image(img, use_container_width=True)
+    #st.image(img, use_container_width=True)
 
 
 
@@ -320,3 +320,5 @@ if selected == "Inputs and Prediction":
         prediction = p.preproc_(csv_path)
         st.subheader("Prediction Result")
         st.write(f"The predicted compensation benefit is: {prediction}")
+        
+        
