@@ -4,7 +4,12 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, \
     GradientBoostingClassifier, AdaBoostClassifier
 from xgboost import XGBClassifier 
+from lightgbm import LGBMClassifier
+#from catboost import CatBoostClassifier
 from sklearn.neural_network import MLPClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
+
 
 def run_model(model_name, X, y):
     
@@ -24,8 +29,18 @@ def run_model(model_name, X, y):
         model = XGBClassifier().fit(X, y)
     elif model_name == 'MLP':
         model = MLPClassifier().fit(X, y)
+    elif model_name == 'NB':  
+        model = GaussianNB().fit(X, y)
+    elif model_name == 'KNN':  
+        model = KNeighborsClassifier().fit(X, y)
+    elif model_name == 'LGBM':  
+        model = LGBMClassifier().fit(X, y)
+    elif model_name == 'CatBoost':  
+        model = CatBoostClassifier(verbose=0).fit(X, y)  # `verbose=0` suppresses output
+    
         
     return model
+
 
 def modeling(model_names, X_train, y_train, X_val, y_val):
     
