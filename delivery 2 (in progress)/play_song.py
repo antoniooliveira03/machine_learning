@@ -22,13 +22,13 @@ import os
 # audio = AudioSegment.from_file("audio.mp3")
 # play(audio)
 
-
 def play_(audio_file):
-    # Load the audio file
+
+    # Load File
     audio = AudioSegment.from_file(audio_file)
 
-    # Slice the first 10 seconds (10 * 1000 milliseconds)
+    # Select Length
     first_10_seconds = audio[:10 * 1000]
 
-    # Play the sliced audio
+    # Play
     play(first_10_seconds)
