@@ -1,22 +1,32 @@
-import matplotlib.pyplot as plt
-import seaborn as sns
 import pandas as pd
 import numpy as np
+
+# Plots
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Feature Selection
 from sklearn.linear_model import Lasso
 from sklearn.feature_selection import SelectKBest, chi2
-from sklearn.preprocessing import MinMaxScaler
 from sklearn.feature_selection import mutual_info_classif
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.feature_selection import RFE
+
+# Scaler
+from sklearn.preprocessing import MinMaxScaler
+
+# Model
 from sklearn.linear_model import LogisticRegression
+
+# Metrics
 from sklearn.metrics import classification_report, f1_score
 
 def correlation_matrix(X, cmap='YlOrBr'):
     
-    # Compute the absolute correlation matrix
+    # Correlation matrix
     corr_matrix = X.corr().abs()
 
-    # Plot the heatmap
+    # Plot Heatmap
     plt.figure(figsize=(12, 10))
     sns.heatmap(corr_matrix, annot=True, cmap=cmap, fmt=".2f")
     plt.title("Feature Correlation Matrix")
@@ -24,12 +34,12 @@ def correlation_matrix(X, cmap='YlOrBr'):
 
 def chi_squared(X_categ, y, threshold=0.05):
     
-    # Scale the features
+    # Scale 
     scaler = MinMaxScaler()
     X_scaled = pd.DataFrame(scaler.fit_transform(X_categ), 
                             columns=X_categ.columns)
     
-    # Fit the chi-squared selector
+    # Fit 
     chi2_selector = SelectKBest(chi2, k='all')
     chi2_selector.fit(X_scaled, y)
 
@@ -50,7 +60,7 @@ def chi_squared(X_categ, y, threshold=0.05):
     # Extract non-selected features
     non_selected_features = scores_df[scores_df['p-value'] >= threshold]
 
-    # Plot the Chi-squared scores
+    # Plot
     plt.figure(figsize=(12, 8))
     sns.barplot(x='Chi2 Score', y='Feature', data=scores_df.sort_values(by='Chi2 Score', ascending=False), color='orange')
     plt.axvline(x=threshold, color='red', linestyle='--', label=f'p-value Threshold = {threshold}')
@@ -61,25 +71,24 @@ def chi_squared(X_categ, y, threshold=0.05):
     plt.tight_layout()
     plt.show()
     
+    # Print Results
     print(f"\nInitial Features: {len(X_categ.columns.tolist())}\n")
     print(X_categ.columns.tolist())
     print(f"\nDecision for Categorical Features (p-value < threshold): {len(selected_features.tolist())}\n")
     print(selected_features.tolist())
-
-    # Display non-selected features with their p-values and Chi-squared scores
     print("\nNon-Selected Features (p-value >= threshold):\n")
     print(non_selected_features[['Feature', 'Chi2 Score', 'p-value']])
 
 def mutual_info(X, y, threshold=0.1):
     
-    # Calculate MI scores
+    # MI scores
     mi_scores = mutual_info_classif(X, y, random_state=0)
     mi_scores_series = pd.Series(mi_scores, index=X.columns)
     
     # Select features based on the threshold
     selected_features = mi_scores_series[mi_scores_series >= threshold].index.tolist()
     
-    # Plot the MI scores for visualization
+    # Plot
     plt.figure(figsize=(10, 6))
     mi_scores_series.sort_values(ascending=True).plot(kind='barh', color='orange')
     plt.axvline(x=threshold, color='red', linestyle='--', label=f'Threshold = {threshold}')
@@ -104,7 +113,7 @@ def rfe(X_train, y_train, X_val, y_val, n_features, model=None):
     
     for feature in n_features:
         
-        # Perform RFE to select features
+        # Fit
         rfe = RFE(estimator=model, n_features_to_select=feature)
         rfe.fit(X_train, y_train)
 
@@ -112,26 +121,28 @@ def rfe(X_train, y_train, X_val, y_val, n_features, model=None):
         selected_features = X_train.columns[rfe.support_]
         
         print('-------------TRAIN-------------')
-        # Model predictions and classification report on the training set with selected features
+
+        # Predictions for Train
         y_pred = rfe.predict(X_train)
         print(f"Classification Report for {feature} features:\n")
         print(classification_report(y_train, y_pred))
         
-        # Calculate the macro average F1 score
+        # Metrics
         macro_f1 = f1_score(y_train, y_pred, average='macro')
         print(f"Macro Avg F1 Score for {feature} features: {macro_f1:.4f}\n")
         
         print('----------VALIDATION----------')
-        # Model predictions and classification report on the training set with selected features
+
+        # Predictions for Validation
         y_val_pred = rfe.predict(X_val)
         print(f"Classification Report for {feature} features:\n")
         print(classification_report(y_val, y_val_pred))
         
-        # Calculate the macro average F1 score
+        # Metrics
         macro_f1_val = f1_score(y_val, y_val_pred, average='macro')
         print(f"Macro Avg F1 Score for {feature} features: {macro_f1_val:.4f}\n")
         
-        # Check if this is the best score
+        # Best score
         if macro_f1_val > best_score:
             best_score = macro_f1_val
             best_features = selected_features.tolist()  
@@ -141,21 +152,22 @@ def rfe(X_train, y_train, X_val, y_val, n_features, model=None):
 
 def lasso(X, y, alpha = 0.01, color = 'orange'):
     
+    # Fit
     lasso = Lasso(alpha=alpha)
     lasso.fit(X, y)
     
+    # Get Feature Importance
     importance = pd.Series(lasso.coef_, index=X.columns)
-    
-    non_zero_importance = importance[importance != 0]
-    
     importance.sort_values().plot(kind="barh", color=color)
-    
+    non_zero_importance = importance[importance != 0]
+    selected_features = non_zero_importance.index
+
+    # Plot
     plt.title("Lasso Feature Importance")
     plt.xlabel("Coefficient Value")
     plt.show()
     
-    selected_features = non_zero_importance.index
-    
+    # Print Results
     print(f"\nInitial Features: {len(X.columns)}\n")
     print(X.columns.tolist())
     print(f"\nDecision for Numerical Features (lasso ≠ 0): {len(selected_features.tolist())}\n")
@@ -163,48 +175,45 @@ def lasso(X, y, alpha = 0.01, color = 'orange'):
 
 def plot_feature_importance(X_num, X_categ, y, n_estimators=250, random_state=42,
                             threshold=5):
-    # Concatenate scaled and categorical features
+    
+    # Combine Numeric and Categroical
     X_comb = pd.concat([X_num, X_categ], axis=1)
 
-    # Initialize the ExtraTreesClassifier with given parameters
+    # Fit
     clf = ExtraTreesClassifier(n_estimators=n_estimators,
                                random_state=random_state)
-
-    # Fit the model on the training data
     clf.fit(X_comb, y)
 
-    # Calculate feature importances
+    # Feature Importances
     feature_importance = clf.feature_importances_
     feature_importance = 100.0 * (feature_importance / feature_importance.max())
 
-    # Sort the indices of features based on importance
+    # Sort based on importance
     sorted_idx = np.argsort(feature_importance)
     pos = np.arange(sorted_idx.shape[0]) + 0.5
 
-    # Plot feature importances
+    # Plot
     plt.figure(figsize=(12, 8))
     plt.barh(pos, feature_importance[sorted_idx], align='center', color = 'orange')
     plt.yticks(pos, X_comb.columns[sorted_idx])
     plt.xlabel('Relative Importance')
     plt.title('Feature Importance Using ExtraTreesClassifier')
-    # Draw a line at the 5% importance threshold
+
+    # Draw a line at the defined threshold
     plt.axvline(x=threshold, color='red', linestyle='--', label=f'{threshold}% Importance Threshold')
     plt.legend()
-
     plt.show()
 
+    # Print Results 
     print(f"\nInitial Features: {len(X_comb.columns)}\n")
     print(X_comb.columns.tolist())
 
-    # Identify important features
+    # Split Numerical and Categorical for easier interpretation
     important_features = X_comb.columns[feature_importance >= threshold]
-
-    # Split important features into numerical and categorical
     important_num_features = [f for f in important_features if f in X_num.columns]
     important_categ_features = [f for f in important_features if f in X_categ.columns]
 
     print("\nImportant Numerical Features:")
     print(important_num_features)
-
     print("\nImportant Categorical Features:")
     print(important_categ_features)
