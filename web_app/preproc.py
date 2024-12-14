@@ -4,6 +4,7 @@ import utils as u
 import utils2 as p
 import streamlit as st
 import datetime
+
 # Scaler
 from sklearn.preprocessing import (
     StandardScaler,
@@ -14,12 +15,12 @@ from sklearn.preprocessing import (
 from sklearn.model_selection import train_test_split
 # Models
 import models as mod
-from xgboost import XGBClassifier  
+from sklearn.ensemble import RandomForestClassifier  
 
 
 def preproc_(path):
     
-    user_input = pd.read_csv(path)
+    user_input = pd.read_csv(path, index_col='Claim Identifier')
 
     st.text("Processing your input data...")
 
@@ -40,20 +41,15 @@ def preproc_(path):
 
     user_input['Carrier Type'] = user_input['Carrier Type'].replace(mapping)
 
-    mapping = {  
-        'M': 'M',
-        'F': 'F',
-        'U': 'U/X',  
-        'X': 'U/X' }
-
-    user_input['Gender'] = user_input['Gender'].map(mapping)  
-
     user_input['Gender Enc'] = user_input['Gender'].replace({'M': 0, 'F': 1, 'U/X': 2})
 
 
     for column in user_input.columns:
         # Check if the column is a datetime type
         if pd.api.types.is_datetime64_any_dtype(user_input[column]) and column not in ['C-3 Date', 'First Hearing Date']:
+            user_input[f'{column} Year'] = user_input[column].dt.year
+            user_input[f'{column} Month'] = user_input[column].dt.month
+            user_input[f'{column} Day'] = user_input[column].dt.day
             user_input[f'{column} Day of Week'] = user_input[column].dt.weekday 
 
     user_input['Accident to Assembly Time'] = (user_input['Assembly Date'] - user_input['Accident Date']).dt.days
@@ -98,13 +94,13 @@ def preproc_(path):
     user_input.drop(columns = drop, axis = 1, inplace = True)
 
 ##################################################################################################
-    
-    #Reading the train data
-    df= pd.read_csv("web_app/train_data_EDA.csv")
+    # Reading the train data
+    df= pd.read_csv("/Users/antoniooliveira/Documents/GitHub/machine_learning/delivery 2 (in progress)/data/train_data_EDA.csv",
+                    index_col='Claim Identifier')
     
     # Split the DataFrame into features (X) and target variable (y)
-    X =df.drop('Claim Injury Type', axis=1) 
-    y =df['Claim Injury Type']  
+    X = df.drop('Claim Injury Type', axis=1) 
+    y = df['Claim Injury Type']  
 
     # Split the dataset into training and validation sets
     X_train, X_val, y_train, y_val = train_test_split(X, y, 
@@ -117,12 +113,12 @@ def preproc_(path):
     
     X_train['Alternative Dispute Resolution Enc'] = X_train['Alternative Dispute Resolution'].replace({'N': 0, 'Y': 1, 'U': 1})
     X_val['Alternative Dispute Resolution Enc'] = X_val['Alternative Dispute Resolution'].replace({'N': 0, 'Y': 1, 'U': 1}) 
-    user_input['Alternative Dispute Resolution Enc'] = user_input['Alternative Dispute Resolution'].replace({'N': 0, 'Y': 1, 'U': 1})
+    user_input['Alternative Dispute Resolution Enc'] = user_input['Alternative Dispute Resolution'].replace({'No': 0, 'Yes': 1, 'U': 1})
     
     #Attorney/Representative
     X_train['Attorney/Representative Enc'] = X_train['Attorney/Representative'].replace({'N': 0, 'Y': 1})
     X_val['Attorney/Representative Enc'] = X_val['Attorney/Representative'].replace({'N': 0, 'Y': 1})
-    user_input['Attorney/Representative Enc'] = user_input['Attorney/Representative'].replace({'N': 0, 'Y': 1})
+    user_input['Attorney/Representative Enc'] = user_input['Attorney/Representative'].replace({'No': 0, 'Yes': 1})
     
     #Carrier Name
     train_carriers = set(X_train['Carrier Name'].unique())
@@ -152,7 +148,7 @@ def preproc_(path):
     #Covid-19 Indicator
     X_train['COVID-19 Indicator Enc'] = X_train['COVID-19 Indicator'].replace({'N': 0, 'Y': 1})
     X_val['COVID-19 Indicator Enc'] = X_val['COVID-19 Indicator'].replace({'N': 0, 'Y': 1})
-    user_input['COVID-19 Indicator Enc'] = user_input['COVID-19 Indicator'].replace({'N': 0, 'Y': 1})
+    user_input['COVID-19 Indicator Enc'] = user_input['COVID-19 Indicator'].replace({'No': 0, 'Yes': 1})
     
     #District Name 
     X_train, X_val, user_input = p.encode(X_train, X_val, user_input, 'District Name', 'count')
@@ -276,84 +272,73 @@ def preproc_(path):
                      user_input[categ_label_bin]], axis=1)
 
     # Countinuing MV
+
     #Average Weekly Wage
-    p.ball_tree_impute([X_train_RS, X_val_RS, user_input_RS], 
+    p.ball_tree_impute([X_train_RS, X_val_RS], 
                    'Average Weekly Wage')
     
     ## Outliers 
-    # Age at Injury
-    X_train = X_train[X_train['Age at Injury'] < 88.5]
 
     #Avg Weekly Wage
     # Square Root 
-    X_train['Average Weekly Wage Sqrt'] = np.sqrt(X_train['Average Weekly Wage'])
+    X_train_RS['Average Weekly Wage Sqrt'] = np.sqrt(X_train_RS['Average Weekly Wage'])
 
-    X_val['Average Weekly Wage Sqrt'] = np.sqrt(X_val['Average Weekly Wage'])
+    X_val_RS['Average Weekly Wage Sqrt'] = np.sqrt(X_val_RS['Average Weekly Wage'])
 
-    user_input['Average Weekly Wage Sqrt'] = np.sqrt(user_input['Average Weekly Wage'])
+    user_input_RS['Average Weekly Wage Sqrt'] = np.sqrt(user_input_RS['Average Weekly Wage'])
 
     # Winsorization
     upper_limit = X_train['Average Weekly Wage'].quantile(0.99)
     lower_limit = X_train['Average Weekly Wage'].quantile(0.01)
 
-    X_train['Average Weekly Wage'] = X_train['Average Weekly Wage'].clip(lower = lower_limit
+    X_train_RS['Average Weekly Wage'] = X_train_RS['Average Weekly Wage'].clip(lower = lower_limit
                                                                   , upper=upper_limit)
     # Birth Year
-    X_train = X_train[X_train['Birth Year'] > 1932.5]
 
     # IME-4 Count
-    X_train['IME-4 Count Log'] = np.log1p(X_train['IME-4 Count'])
-    X_train['IME-4 Count Double Log'] = np.log1p(X_train['IME-4 Count Log'])
+    X_train_RS['IME-4 Count Log'] = np.log1p(X_train_RS['IME-4 Count'])
+    X_train_RS['IME-4 Count Double Log'] = np.log1p(X_train_RS['IME-4 Count Log'])
 
-    X_val['IME-4 Count Log'] = np.log1p(X_val['IME-4 Count'])
-    X_val['IME-4 Count Double Log'] = np.log1p(X_val['IME-4 Count Log'])
+    X_val_RS['IME-4 Count Log'] = np.log1p(X_val_RS['IME-4 Count'])
+    X_val_RS['IME-4 Count Double Log'] = np.log1p(X_val_RS['IME-4 Count Log'])
 
-    user_input['IME-4 Count Log'] = np.log1p(user_input['IME-4 Count'])
-    user_input['IME-4 Count Double Log'] = np.log1p(user_input['IME-4 Count Log'])
+    user_input_RS['IME-4 Count Log'] = np.log1p(user_input_RS['IME-4 Count'])
+    user_input_RS['IME-4 Count Double Log'] = np.log1p(user_input_RS['IME-4 Count Log'])
 
     # Accident Date Year
-    X_train = X_train[X_train['Accident Date Year'] > 2017.0]
+
 
     # C-2 Date Year
-    X_train = X_train[X_train['C-2 Date Year'] > 2017.0]
+    
 
     #Alternative Dispute Resolution Enc --> it will prob be dropeed
     # Ensuring y_train as the same indices as Y_train
-    y_train = y_train[X_train.index]
+    y_train = y_train[X_train_RS.index]
 
     ## Modeling 
     # Importing Correct Datasets
-    X_train = pd.read_csv('./data/X_train_treated.csv', index_col = 'Claim Identifier')
-    X_val = pd.read_csv('./data/X_val_treated.csv', index_col = 'Claim Identifier')
-    y_train = pd.read_csv('./data/y_train_treated.csv', index_col = 'Claim Identifier')
-    y_val = pd.read_csv('./data/y_val_treated.csv', index_col = 'Claim Identifier')
-    user_input = pd.read_csv('./data/user_input_treated.csv', index_col = 'Claim Identifier')
+    #X_train = pd.read_csv('./data/X_train_treated.csv', index_col = 'Claim Identifier')
+    #X_val = pd.read_csv('./data/X_val_treated.csv', index_col = 'Claim Identifier')
+    #y_train = pd.read_csv('./data/y_train_treated.csv', index_col = 'Claim Identifier')
+    #y_val = pd.read_csv('./data/y_val_treated.csv', index_col = 'Claim Identifier')
+    #user_input = pd.read_csv('./data/user_input_treated.csv', index_col = 'Claim Identifier')
 
-    # Select Columns for Predictions
-    columns = ['Age at Injury', 'Average Weekly Wage', 
-           'Birth Year', 'IME-4 Count', 'Number of Dependents', 
-           'Accident Date Year', 'Accident Date Month', 'Accident Date Day', 
-           'Assembly Date Year', 'Assembly Date Month', 'Assembly Date Day', 
-           'C-2 Date Year', 'C-2 Date Month', 'C-2 Date Day', 
-           'Accident to Assembly Time', 'Assembly to C-2 Time', 
-           'Accident to C-2 Time', 'Industry Code', 'WCIO Cause of Injury Code', 
-           'WCIO Nature of Injury Code', 'WCIO Part Of Body Code', 
-           'Accident Date Day of Week', 'Assembly Date Day of Week', 
-           'C-2 Date Day of Week', 'WCIO Codes', 'Attorney/Representative Enc', 
-           'Carrier Name Enc', 'County of Injury Enc', 'District Name Enc', 
-           'Medical Fee Region Enc', 
-           'Industry Sector Enc', 'C-3 Date Binary', 'First Hearing Date Binary']
-
-
-    X_train_filtered = X_train_RS[columns]
-    X_val_filtered = X_val_RS[columns]
-    user_input_filtered = user_input_RS[columns]
+    st.write('The model is being trained...')
+    st.write('This will take a few (3-4) minutes')
 
     ## Modeling
+    model = RandomForestClassifier()
+    model.fit(X_train_RS, y_train)
+    train_pred = model.predict(X_train_RS)
+    val_pred = model.predict(X_val_RS)
 
-    test_filtered = user_input
 
-    test_filtered['Claim Injury Type'] = XGBClassifier.predict(test_filtered)
+
+    ## Final Predictions
+
+    test_filtered = user_input_RS
+
+    test_filtered['Claim Injury Type'] = model.predict(test_filtered)
 
     #Map Predictions to Original Values
 
@@ -369,7 +354,7 @@ def preproc_(path):
     }
 
     test_filtered['Claim Injury Type'] = test_filtered['Claim Injury Type'].replace(label_mapping)
-    predicted_label = test_filtered.get(test_filtered[0], "Unknown")
+    predicted_label = test_filtered[0]
     
     return predicted_label
 
