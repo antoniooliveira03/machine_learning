@@ -30,35 +30,40 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import f1_score, precision_score, recall_score, confusion_matrix
 
 
-def run_model(model_name, X, y):
-    
+def run_model(model_name, X, y, params = None):
+
+    if params is None:
+        params = {}
+
     if model_name == 'LR':
-        model = LogisticRegression().fit(X, y)
+        model = LogisticRegression(**params).fit(X, y)
     elif model_name == 'SGD':
-        model = SGDClassifier().fit(X, y)
+        model = SGDClassifier(**params).fit(X, y)
     elif model_name == 'DT':
-        model = DecisionTreeClassifier().fit(X, y)
+        model = DecisionTreeClassifier(**params).fit(X, y)
     elif model_name == 'RF':
-        model = RandomForestClassifier().fit(X, y)
+        model = RandomForestClassifier(**params).fit(X, y)
     elif model_name == 'AdaBoost':
-        model = AdaBoostClassifier().fit(X, y)
+        model = AdaBoostClassifier(**params).fit(X, y)
     elif model_name == 'GBoost':
-        model = GradientBoostingClassifier().fit(X, y)
+        model = GradientBoostingClassifier(**params).fit(X, y)
     elif model_name == 'XGB':
-        model = XGBClassifier().fit(X, y)
+        model = XGBClassifier(**params).fit(X, y)
     elif model_name == 'MLP':
-        model = MLPClassifier().fit(X, y)
+        model = MLPClassifier(**params).fit(X, y)
     elif model_name == 'NB':  
         model = GaussianNB().fit(X, y)
     elif model_name == 'KNN':  
-        model = KNeighborsClassifier().fit(X, y)
+        model = KNeighborsClassifier(**params).fit(X, y)
     elif model_name == 'LGBM':  
-        model = LGBMClassifier().fit(X, y)
+        model = LGBMClassifier(**params).fit(X, y)
         
     return model
 
 
-def modeling(model_names, X_train, y_train, X_val, y_val):
+def modeling(model_names, params,
+             X_train, y_train, 
+             X_val, y_val):
     
     results = {}
     
@@ -66,7 +71,7 @@ def modeling(model_names, X_train, y_train, X_val, y_val):
         print(f"Training model: {model_name}")
         
         # Training
-        model = run_model(model_name, X_train, y_train)
+        model = run_model(model_name, X_train, y_train, params.get(model_name, {}))
         
         # Predictions
         y_train_pred = model.predict(X_train)
@@ -99,7 +104,7 @@ def modeling(model_names, X_train, y_train, X_val, y_val):
 
 # KFOLD
 
-def k_fold(method, X, y, model_name, test1):
+def k_fold(method, X, y, test1, model_name, params):
 
     # Save metrics
     f1macro_train = []
@@ -254,7 +259,7 @@ def k_fold(method, X, y, model_name, test1):
                            'Average Weekly Wage')
         
         # Training
-        model = run_model(model_name, X_train_RS, y_train)
+        model = run_model(model_name, X_train_RS, y_train, params.get(model_name, {}))
 
         # Predictions
         pred_train = model.predict(X_train_RS)
