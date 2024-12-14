@@ -153,6 +153,21 @@ if selected == "Explore Data":
     st.subheader("Numerical features against Target Variable (Claim Injury Type)")
 
     def hist_target(dataframe):
+         # Reverse the encoding in the target column
+        label_mapping = { 
+        0: "1. CANCELLED",
+        1: "2. NON-COMP",
+        2: "3. MED ONLY",
+        3: "4. TEMPORARY",
+        4: "5. PPD SCH LOSS",
+        5: "6. PPD NSL",
+        6: "7. PTD",
+        7: "8. DEATH"   
+    }
+    
+        # Map the numeric Claim Injury Type to descriptive labels
+        dataframe['Claim Injury Type Label'] = dataframe['Claim Injury Type'].map(label_mapping)
+
         # Reverse the encoding in the target column
         target_var = dataframe['Claim Injury Type']
     
@@ -166,7 +181,7 @@ if selected == "Explore Data":
 
         # Plot the histogram
         plt.figure(figsize=(10, 6))
-        sns.histplot(data=dataframe, x=target_hist, hue="Claim Injury Type", kde=True, bins=bin_count, palette=color_palette)
+        sns.histplot(data=dataframe, x=target_hist, hue="Claim Injury Type Label", kde=True, bins=bin_count, palette=color_palette)
         plt.title(f"Distribution of {target_hist} by Claim Injury Type")
         st.pyplot(plt)
     
