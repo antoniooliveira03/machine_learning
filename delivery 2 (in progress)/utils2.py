@@ -1,15 +1,21 @@
-from sklearn.neighbors import NearestNeighbors
 import numpy as np
 import pandas as pd
+
+# Encoder and NN
+from sklearn.neighbors import NearestNeighbors
+from sklearn.preprocessing import OneHotEncoder
+
+# Plots
 import matplotlib.pyplot as plt
 import seaborn as sns
 
 
+
 ## ENCODE
 
-from sklearn.preprocessing import OneHotEncoder
 def encode(train, val, test, column, type_):
     
+    # Count Encoding
     if type_ == 'count':
         new_column = column + ' Enc'  
 
@@ -19,7 +25,9 @@ def encode(train, val, test, column, type_):
         val[new_column] = val[column].map(freq).astype(int)
         test[new_column] = test[column].map(freq).astype(int)
         
+    # One Hot Encoding
     elif type_ == 'OHE':
+
         encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
         
         # Fit on the training data and transform all datasets
@@ -53,19 +61,19 @@ def fill_dates(train_df, other_dfs, feature_prefix):
     month_col = f'{feature_prefix} Month'
     day_col = f'{feature_prefix} Day'
     
-    # Calculate medians from the training dataframe
+    # Calculate medians from Training 
     accident_med = {
         year_col: round(train_df[year_col].median()),
         month_col: round(train_df[month_col].median()),
         day_col: round(train_df[day_col].median())
     }
     
-    # Fill missing values and convert to integer type in the training set
+    # Fill missing values in Train
     for col, med in accident_med.items():
         train_df[col].fillna(med, inplace=True)
         train_df[col] = train_df[col].astype('Int64')
     
-    # Apply the same transformations to the other datasets
+    # Fill missing values in other_dfs
     for df in other_dfs:
         for col, med in accident_med.items():
             df[col].fillna(med, inplace=True)
@@ -73,53 +81,60 @@ def fill_dates(train_df, other_dfs, feature_prefix):
 
 
 def fill_dow(dataframes, feature_prefix):
+
     # Define column names
     year_col = f'{feature_prefix} Year'
     month_col = f'{feature_prefix} Month'
     day_col = f'{feature_prefix} Day'
     dayofweek_col = f'{feature_prefix} Day of Week'
     
-    # Loop through the provided dataframes to process each one
     for df in dataframes:
+
         # Identify rows where the 'Day of Week' column is missing
         missing_dayofweek = df[dayofweek_col].isnull()
         
-        # If there are missing values in 'Day of Week'
+        # If missing
         if missing_dayofweek.any():
-            # Create a temporary 'Accident Date' column by combining Year, Month, and Day
+
+            # Create a temporary 'Accident Date'
             df.loc[missing_dayofweek, 'TEMP Accident Date'] = pd.to_datetime(
                 df.loc[missing_dayofweek, [year_col, month_col, day_col]]
                 .astype(str)                   
                 .agg('-'.join, axis=1),        
                 errors='coerce')
             
-            # Fill the missing 'Day of Week' using the newly created 'TEMP Accident Date'
+            # Fill the missing 'Day of Week' 
             df.loc[missing_dayofweek, dayofweek_col] = df.loc[missing_dayofweek, 'TEMP Accident Date'].dt.dayofweek
             
-            # Drop the temporary column after it's no longer needed
+            # Drop Temo
             df.drop(columns=['TEMP Accident Date'], inplace=True, errors='ignore')
         
-        # Ensure the 'Day of Week' column has the correct integer type
+        # Convert to int
         df[dayofweek_col] = df[dayofweek_col].astype('Int64')
 
 
 def fill_birth_year(dfs):
+
     # Define fixed column names
     year_col = 'Accident Date Year'
     age_col = 'Age at Injury'
     birth_year_col = 'Birth Year'
 
-    # Process the other DataFrames
     for df in dfs:
+        # If year_col and age not missing and birth_year is missing or equal to zero
         mask = df[year_col].notna() & df[age_col].notna() & \
                (df[birth_year_col].isna() | (df[birth_year_col] == 0))
+        
+        # Compute birth year
         df.loc[mask, birth_year_col] = df[year_col] - df[age_col]
 
 
 def ball_tree_impute(dfs, target, n_neighbors=5):
+    # Target is the variable we want to fill, in this case it will be used for Average Weekly Wage
 
     for df in dfs:
-        # Get all features except the target column
+
+        # Get all features except the target
         features = df.columns.drop(target)
 
         # Separate rows with and without missing target values
@@ -127,7 +142,7 @@ def ball_tree_impute(dfs, target, n_neighbors=5):
         non_missing_data = df[~missing_mask]
         missing_data = df[missing_mask]
 
-        # Build a ball tree using all features except the target column
+        # Model
         knn = NearestNeighbors(n_neighbors=n_neighbors, algorithm='ball_tree')
         knn.fit(non_missing_data[features])
 
@@ -148,7 +163,8 @@ def ball_tree_impute(dfs, target, n_neighbors=5):
 
 
 def fill_missing_times(df, cols):
-    
+
+    # Recompute Dates
     df['Accident Date'] = pd.to_datetime(
         df['Accident Date Year'].astype(str) + '-' +
         df['Accident Date Month'].astype(str).str.zfill(2) + '-' + 
@@ -172,6 +188,8 @@ def fill_missing_times(df, cols):
     
     
     for col in cols:
+
+        # Fill Columns
         if col == 'Accident to Assembly Time':
             df['Accident to Assembly Time'] = df['Accident to Assembly Time'].fillna(
                 (df['Assembly Date'] - df['Accident Date']).dt.days)
@@ -184,6 +202,7 @@ def fill_missing_times(df, cols):
             df['Accident to C-2 Time'] = df['Accident to C-2 Time'].fillna(
                 (df['C-2 Date'] - df['Assembly Date']).dt.days)
 
+    # Drop recomputed and temporary Dates
     df.drop(['Accident Date', 'Assembly Date', 'C-2 Date'], axis = 1, inplace = True)        
             
     return df
@@ -191,34 +210,39 @@ def fill_missing_times(df, cols):
 
 ## OUTLIERS
 
+def detect_outliers_iqr(df, threshold):
 
-def detect_outliers_iqr(df, missing_threshold):
-    missing_col = []
+    # Save outliers, their indices and upper and lower bounds
+    outliers = []
     outliers_indices = set()
     bounds = {}  
     
     for column in df.select_dtypes(include=[np.number]).columns:
+
+        # Compute Quartiles, IQR and bounds
         Q1 = df[column].quantile(0.25)
         Q3 = df[column].quantile(0.75)
         IQR = Q3 - Q1
         lower_bound = Q1 - 1.5 * IQR
         upper_bound = Q3 + 1.5 * IQR
         
-        # Store the bounds
+        # Store bounds
         bounds[column] = {'lower_bound': lower_bound, 'upper_bound': upper_bound}
         
         # Identify outliers
         outlier_data = df[(df[column] < lower_bound) | (df[column] > upper_bound)]
         outliers_indices.update(outlier_data.index)
         
+        # Compute Percentage of Outliers
         missing = len(outlier_data) / len(df) * 100
         
-        # Print the number of outliers
+        # Print the number of outliers 
         print(f'Column: {column} - Number of Outliers: {len(outlier_data)}')
         print(f'Column: {column} - % of Outliers: {missing:.2f}% \n')
         
-        if missing > missing_threshold:
-            missing_col.append(column)
+        # if Outliers % above the Threshold
+        if missing > threshold:
+            outliers.append(column)
         
         # Boxplot for each column
         plt.figure(figsize=(8, 6))
@@ -234,7 +258,7 @@ def detect_outliers_iqr(df, missing_threshold):
         plt.legend()
         plt.show()
     
-    print(f'Columns with more than {missing_threshold}% Outliers:')        
-    print(missing_col)
+    print(f'Columns with more than {threshold}% Outliers:')        
+    print(outliers)
     
     return bounds  
