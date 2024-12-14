@@ -93,7 +93,6 @@ def preproc_(path):
 
     user_input.drop(columns = drop, axis = 1, inplace = True)
 
-##################################################################################################
     # Reading the train data
     df= pd.read_csv("/Users/antoniooliveira/Documents/GitHub/machine_learning/delivery 2 (in progress)/data/train_data_EDA.csv",
                     index_col='Claim Identifier')
@@ -316,13 +315,6 @@ def preproc_(path):
     y_train = y_train[X_train_RS.index]
 
     ## Modeling 
-    # Importing Correct Datasets
-    #X_train = pd.read_csv('./data/X_train_treated.csv', index_col = 'Claim Identifier')
-    #X_val = pd.read_csv('./data/X_val_treated.csv', index_col = 'Claim Identifier')
-    #y_train = pd.read_csv('./data/y_train_treated.csv', index_col = 'Claim Identifier')
-    #y_val = pd.read_csv('./data/y_val_treated.csv', index_col = 'Claim Identifier')
-    #user_input = pd.read_csv('./data/user_input_treated.csv', index_col = 'Claim Identifier')
-
     st.write('The model is being trained...')
     st.write('This will take a few (3-4) minutes')
 
@@ -331,8 +323,6 @@ def preproc_(path):
     model.fit(X_train_RS, y_train)
     train_pred = model.predict(X_train_RS)
     val_pred = model.predict(X_val_RS)
-
-
 
     ## Final Predictions
 
@@ -354,7 +344,7 @@ def preproc_(path):
     }
 
     test_filtered['Claim Injury Type'] = test_filtered['Claim Injury Type'].replace(label_mapping)
-    predicted_label = test_filtered[0]
+    predicted_label = test_filtered['Claim Injury Type'].iloc[0]
     
     return predicted_label
 
