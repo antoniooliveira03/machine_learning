@@ -1,7 +1,9 @@
-
-
+# Numeric Stats
 def num_stats(train, test, columns):
+
+    # Initialize empty Dictionary
     comparison = {}
+
     for col in columns:
         comparison[col] = {
             'DF Mean': train[col].mean(),
@@ -19,12 +21,17 @@ def num_stats(train, test, columns):
             'DF Max': train[col].max(),
             'Test Max': test[col].max(),
         }
+
     return comparison
 
+# Objects Stats
 def obj_stats(train, test, columns):
+
+    # Initialize empty Dictionary
     comparison = {}
     
     for col in columns:
+        # Skip Target
         if col == 'Claim Injury Type':
             continue
         else:
@@ -36,10 +43,13 @@ def obj_stats(train, test, columns):
                 'DF Top Value Count': train[col].value_counts().iloc[0],
                 'Test Top Value Count': test[col].value_counts().iloc[0],
         }
+            
     return comparison
 
 
+# Group Mapping for Industry 
 def group_industry(industry):
+
     # Public Services / Government
     if industry in ['PUBLIC ADMINISTRATION', 'HEALTH CARE AND SOCIAL ASSISTANCE', 'EDUCATIONAL SERVICES', 'ARTS, ENTERTAINMENT, AND RECREATION']:
         return 'Public Services / Government'

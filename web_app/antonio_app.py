@@ -48,7 +48,7 @@ if selected == "Home":
     """)
 
     # Display the logo below the team section
-    st.image(img, use_container_width=True)
+    #st.image(img, use_container_width=True)
 
 
 
@@ -106,6 +106,13 @@ if selected == "Inputs and Prediction":
                 ["M", "F", 'U/X'],
                 horizontal=True,
                 help="Indicate the gender of the worker.",
+            )
+
+            claim_iden = st.number_input(
+                "Claim Identifier",
+                min_value = 0,
+                value = 2828079,
+                help = "Enter the average weekly wage of the worker.",
             )
 
 
@@ -276,10 +283,17 @@ if selected == "Inputs and Prediction":
                 help="Number of IME-4 forms received.",
             )
 
+            medical_region = st.radio(
+                "Medical Fee Region",
+                ["I", "II", 'III', 'IV', 'X'],
+                help="Number of IME-4 forms received.")
+
+
 
     # Collecting all inputs into the input_df dictionary
     st.subheader("Your Inputs")
     input_data = {
+        'Claim Identifier': int(claim_iden),
         "Birth Year": int(birth_year),
         "Gender": str(gender),
         "Average Weekly Wage": float(avg_weekly_wage),
@@ -289,15 +303,16 @@ if selected == "Inputs and Prediction":
         "Assembly Date": datetime.date(assembly_year, assembly_month, assembly_day),
         "C-2 Date": datetime.date(c2_year, c2_month, c2_day),
         "C-3 Date": datetime.date(c3_year, c3_month, c3_day),
-        "Covid-19 Indicator Enc": bool(1 if covid == "Yes" else 0),
+        "COVID-19 Indicator": str(covid),
         "Carrier Name": str(carrier_name),
         "Carrier Type": str(carrier_type),
         "County of Injury": str(county),
         "District Name": str(district),
-        "Attorney/Representative Enc": bool(1 if attorney == "Yes" else 0),
-        "Alternative Dispute Resolution Enc": bool(1 if alternative_dispute == "Yes" else 0),
+        "Attorney/Representative": str(attorney),
+        "Alternative Dispute Resolution": str(alternative_dispute),
         "First Hearing Date": datetime.date(first_hearing_year, first_hearing_month, first_hearing_day),
         "IME-4 Count": int(ime_4_count),
+        "Medical Fee Region": str(medical_region),
         "Industry Code": int(mapp.industry_code_mapping[industry]),
         "Industry Code Description": str(industry),
         "WCIO Cause of Injury Code": int(mapp.cause_of_injury_mapping[cause_injury]),
@@ -320,3 +335,5 @@ if selected == "Inputs and Prediction":
         prediction = p.preproc_(csv_path)
         st.subheader("Prediction Result")
         st.write(f"The predicted compensation benefit is: {prediction}")
+        
+        

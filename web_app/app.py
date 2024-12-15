@@ -6,61 +6,27 @@ import gzip
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import plotly_express as px
 import seaborn as sns
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from sklearn.ensemble import RandomForestClassifier
+from predict import show_predict
 
 
-# Load the pre-trained model
-def load_model():
-    with gzip.open("trained_model.pkl.gz", "rb") as file:
-        model = pickle.load(file)
-    return model
-
-#Start the encoding methods 
-
-# Manual frequency encoding for 'Carrier Name'
-def encode_carrier_name(carrier_name):
-    carrier_name_freq_map = {
-        "NEW HAMPSHIRE INSURANCE CO": 0.05,
-        "ZURICH AMERICAN INSURANCE CO": 0.10,
-        "INDEMNITY INSURANCE CO OF": 0.07,
-        "MARATHON CENTRAL SCHOOL DIST": 0.02,
-        "CAMBRIDGE CENTRAL SCHOOL": 0.04,
-        "HERMON-DEKALB CENTRAL": 0.03,
-    }
-    return carrier_name_freq_map.get(carrier_name, 0)  # Default to 0 if unknown
-
-
-# Encoding for "WCIO Cause of Injury Code"
-cause_of_injury_mapping = {
-    "Liquid Spills": 1,
-    "Repetitive Motion": 2,
-    "Lifting": 3,
-    "Other": 4,
-}
-
-# Encoding for "Part of Body Injured"
-part_of_body_mapping = {
-    "Hand": 1,
-    "Back": 2,
-    "Foot": 3,
-    "Head": 4,
-    "Other": 5,
-}
-
-# Load model
-model = load_model()
 
 # Load the logo
-img = Image.open("24_Nexus_Analytics.png")
+img = Image.open("./24_Nexus_Analytics.png")
+logo = Image.open("./Nova_IMS.png")
 
+#load Data for vizualizations 
+df= pd.read_csv("./train_data_EDA.csv")
+county_df = pd.read_csv("./geo_county.csv")
 
 # Define the navigation menu
 def streamlit_menu():
     selected = option_menu(
         menu_title=None,
-        options=["Home", "Inputs and Prediction", "Model Data"],
+        options=["Home", "Inputs and Prediction", "Explore Data"],
         icons=["house", "check-circle", "bar-chart-line"],
         menu_icon="cast",
         default_index=0,
@@ -70,6 +36,10 @@ def streamlit_menu():
 
 
 selected = streamlit_menu()
+
+st.logo(
+    logo,
+    size="large")
 
 # Home Page
 if selected == "Home":
@@ -91,199 +61,153 @@ if selected == "Home":
     # App description
     st.markdown("""
     This application is designed to assist the New York Workers' Compensation Board (WCB) in automating the classification of compensation claims. It uses a machine learning model trained on historical claims data from 2020 to 2022 to predict whether a compensation benefit will be granted based on various claim-related features.
+    To use the application, the WCB simply needs to complete a quick form on the Inputs and Predictions page. Additionally, we provide an Explore Data page, which allows the board to analyze the data powering the model for more specific insights.
     """)
+
+    #Inputing the metadata 
+    st.subheader("Metadata")
+    with st.expander("Click to view detailed information about the questions in the form"):
+        metadata = {
+            "County of Injury": "Name of the New York County where the injury occurred.",
+            "COVID-19 Indicator": "Indication that the claim may be associated with COVID-19.",
+            "District Name": "Name of the WCB district office that oversees claims for that region or area of the state.",
+            "First Hearing Date": "Date the first hearing was held on a claim at a WCB hearing location. A blank date means the claim has not yet had a hearing held.",
+            "Gender": "The reported gender of the injured worker.",
+            "IME-4 Count": "Number of IME-4 forms received per claim. The IME-4 form is the 'Independent Examiner's Report of Independent Medical Examination' form.",
+            "Industry Code": "NAICS code and descriptions are available at: https://www.naics.com/search-naics-codes-by-industry/.",
+            "Industry Code Description": "2-digit NAICS industry code description used to classify businesses according to their economic activity.",
+            "Medical Fee Region": "Approximate region where the injured worker would receive medical service.",
+            "OIICS Nature of Injury Description": "The OIICS nature of injury codes & descriptions are available at https://www.bls.gov/iif/oiics_manual_2007.pdf.",
+            "WCIO Cause of Injury Code": "The WCIO cause of injury codes & descriptions are at https://www.wcio.org/Active%20PNC/WCIO_Cause_Table.pdf.",
+            "WCIO Cause of Injury Description": "See description of field above.",
+            "WCIO Nature of Injury Code": "The WCIO nature of injury codes are available at https://www.wcio.org/Active%20PNC/WCIO_Nature_Table.pdf.",
+            "WCIO Nature of Injury Description": "See description of field above.",
+            "WCIO Part Of Body Code": "The WCIO part of body codes & descriptions are available at https://www.wcio.org/Active%20PNC/WCIO_Part_Table.pdf.",
+            "WCIO Part Of Body Description": "See description of field above.",
+            "Zip Code": "The reported ZIP code of the injured worker's home address.",
+            "Agreement Reached": "Binary variable: Yes if there is an agreement without the involvement of the WCB -> unknown at the start of a claim.",
+            "WCB Decision": "Multiclass variable: Decision of the WCB relative to the claim: 'Accident' means that claim refers to workplace accident, 'Occupational Disease' means illness from the workplace. -> requires WCB deliberation so it is unknown at start of claim.",
+            "Claim Injury Type": "Main variable: Deliberation of the WCB relative to benefits awarded to the claim. Numbering indicates severity."
+        }
+
+        # Transform the Dict in a pandas data frame
+        metadata_df = pd.DataFrame(list(metadata.items()), columns=["Attribute", "Description"])
+        
+        # Display the table
+        st.dataframe(metadata_df)
 
     # Display the logo below the team section
     st.image(img, use_container_width=True)
 
-# Inputs and Prediction Page
+#Inputs and Predictions Page 
 if selected == "Inputs and Prediction":
     st.title("Predict Compensation Benefit")
     st.markdown(
         "Provide the necessary details below to predict whether a compensation benefit will be granted."
     )
 
-    # Input fields grouped logically
-    st.header("Claim Details")
-    with st.expander("Personal Information"):
-        col1, col2 = st.columns(2)
-        with col1:
-            birth_year = st.slider(
-                "Worker Birth Year",
-                1944,
-                2006,
-                1980,
-                help="Year of the worker's birth.",
-            )
-        with col2:
-            avg_weekly_wage = st.number_input(
-                "Average Weekly Wage (USD)",
-                min_value=0,
-                value=500,
-                help="Enter the average weekly wage of the worker.",
-            )
+    # Run the function of Predictions
+    show_predict()
 
-    with st.expander("Incident Details"):
-        col1, col2 = st.columns(2)
-        with col1:
-            accident_year = st.slider(
-                "Accident Year", 1966, 2021, 2015, help="Year of the accident."
-            )
-            accident_month = st.slider(
-                "Accident Month", 1, 12, 6, help="Month of the accident."
-            )
-        with col2:
-            part_of_body = st.selectbox(
-                "Part of Body Injured",
-                list(part_of_body_mapping.keys()),
-                help="Select the injured body part.",
-            )
-            cause_injury = st.selectbox(
-                "Cause of Injury",
-                list(cause_of_injury_mapping.keys()),
-                help="Select the cause of injury.",
-            )
-
-    with st.expander("Administrative Information"):
-        col1, col2 = st.columns(2)
-        with col1:
-            carrier_name = st.selectbox(
-                "Carrier Name",
-                [
-                    "NEW HAMPSHIRE INSURANCE CO",
-                    "ZURICH AMERICAN INSURANCE CO",
-                    "INDEMNITY INSURANCE CO OF",
-                    "MARATHON CENTRAL SCHOOL DIST",
-                    "CAMBRIDGE CENTRAL SCHOOL",
-                    "HERMON-DEKALB CENTRAL",
-                ],
-                help="Select the insurance carrier handling the claim.",
-            )
-            attorney = st.radio(
-                "Claim Represented by Attorney?",
-                ["Yes", "No"],
-                horizontal=True,
-                help="Indicate if the claim is represented by an attorney.",
-            )
-        with col2:
-            first_hearing_year = st.slider(
-                "First Hearing Year",
-                2020,
-                2024,
-                2022,
-                help="Year of the first hearing.",
-            )
-            ime_4_count = st.number_input(
-                "IME-4 Forms Received Count",
-                min_value=0,
-                max_value=30,
-                value=1,
-                help="Number of IME-4 forms received.",
-            )
-
-    # Manual frequency encoding for 'Carrier Name'
-    carrier_name_freq = encode_carrier_name(carrier_name)
-
-    # Encode categorical features
-    cause_injury_encoded = cause_of_injury_mapping[cause_injury]
-    part_of_body_encoded = part_of_body_mapping[part_of_body]
-
-    # Combine all input data into a dictionary
-    data = {
-        "Birth Year": birth_year,
-        "Average Weekly Wage": avg_weekly_wage,
-        "Accident Year": accident_year,
-        "Accident Month": accident_month,
-        "WCIO Part Of Body Code": part_of_body_encoded,
-        "WCIO Cause of Injury Code": cause_injury_encoded,
-        "Carrier Name freq": carrier_name_freq,
-        "Attorney/Representative Bin": 1 if attorney == "Yes" else 0,
-        "First Hearing Year": first_hearing_year,
-        "IME-4 Count Log": np.log1p(ime_4_count),
-        "C-3 Date Binary": 1,  # Placeholder
-        "Industry Code": 1,  # Placeholder
-        "WCIO Nature of Injury Code": 1,  # Placeholder
-        "C-2 Day": 1,  # Placeholder
-    }
-    input_df = pd.DataFrame(data, index=[0])
-
-    # Align columns with model features
-    expected_features = (
-        model.feature_names_in_
-    )  # Get feature names from the trained model
-    input_df_aligned = input_df.reindex(columns=expected_features, fill_value=0)
-
-    # Display user inputs
-    st.subheader("Your Inputs")
-    st.write(input_df_aligned)
-
-    # Prediction
-    st.subheader("Prediction")
-    if st.button("Predict"):
-        try:
-            prediction = model.predict(input_df_aligned)[0]
-            prediction_proba = model.predict_proba(input_df_aligned)[0]
-
-            # Add a dictionary mapping of class indices to meaningful labels
-            claim_injury_type_mapping = {
-                1: "CANCELLED",
-                2: "NON-COMP",
-                3: "MED ONLY",
-                4: "TEMPORARY",
-                5: "PPD SCH LOSS",
-                6: "PPD NSL",
-                7: "PTD",
-                8: "DEATH",
-            }
-
-            # Get the predicted class
-            predicted_class = np.argmax(
-                prediction_proba
-            )  # Get the index of the class with the highest probability
-            predicted_label = claim_injury_type_mapping.get(
-                predicted_class, "Unknown Class"
-            )
-
-            # Display the predicted class and its corresponding label with confidence
-            st.write(
-                f"The predicted Claim Injury Type is: **{predicted_label}** with a confidence of **{prediction_proba[predicted_class] * 100:.2f}%**."
-            )
-
-            # Provide a detailed explanation of the prediction
-            injury_explanations = {
-                1: "The claim was canceled, and no compensation will be provided.",
-                2: "The claim is deemed ineligible for compensation under workers' compensation laws.",
-                3: "The claim will be treated with medical-only benefits, typically involving medical treatments without compensation for time off work.",
-                4: "The worker's condition is considered temporary, and compensation may be granted for the recovery period.",
-                5: "The worker has sustained a permanent partial disability with a scheduled loss of function (e.g., loss of a limb).",
-                6: "The worker has sustained a permanent partial disability with no scheduled loss but permanent impairment.",
-                7: "The worker is permanently and totally disabled, typically resulting in long-term compensation.",
-                8: "The claim is related to a fatal injury, and compensation may be granted to the worker’s beneficiaries.",
-            }
-
-            # Display injury explanation
-            st.write(
-                f"Explanation: {injury_explanations.get(predicted_class, 'No explanation available for this type.')}"
-            )
-
-            # Optionally, display top 2 predicted classes for user awareness
-            top_n = 2
-            st.write("Top predictions and their confidence levels:")
-            top_n_predictions = sorted(
-                zip(claim_injury_type_mapping.values(), prediction_proba),
-                key=lambda x: x[1],
-                reverse=True,
-            )[:top_n]
-            for label, prob in top_n_predictions:
-                st.write(f"{label}: {prob * 100:.2f}%")
-        except ValueError as e:
-            st.error(f"Prediction failed: {e}")
-
-# Model Data Page
-if selected == "Model Data":
+# Explore Data Page 
+if selected == "Explore Data":
     st.title("Model Data and Insights")
-    st.markdown("View model's performance, confusion matrix, and more.")
-    cm = confusion_matrix([0, 1, 1, 0], [0, 1, 1, 0])  # Replace with real values
-    disp = ConfusionMatrixDisplay(confusion_matrix=cm)
-    disp.plot(cmap=plt.cm.Blues)
-    st.pyplot()
+    st.subheader("Analyse the pairwise relation between the numerical features")
+
+    
+    # Create the list of numeric features 
+    numeric_features = ['Age at Injury', 'Average Weekly Wage', 'Birth Year', 'IME-4 Count','Industry Code','WCIO Cause of Injury Code', 'WCIO Nature of Injury Code', 'WCIO Part Of Body Code', 'Number of Dependents']
+    
+    # Defining and calling the function for an interactive scatterplot
+    def interactive_scater (dataframe):
+        x_axis_val = st.selectbox('Select X-Axis Value', options=numeric_features)
+        y_axis_val = st.selectbox('Select Y-Axis Value', options=numeric_features)
+        col = st.color_picker('Select a plot colour')
+
+        plot  = px.scatter(dataframe, x=x_axis_val, y=y_axis_val)
+        plot.update_traces(marker = dict(color=col))
+        st.plotly_chart(plot)
+
+    interactive_scater (df)
+
+    st.divider()
+    
+    #Creating Hist of numerical
+    st.subheader("Analyse the histograms of Numerical features") 
+
+    def interactive_hist (dataframe):
+        box_hist = st.selectbox('Feature', options=numeric_features)
+        color_choice = st.color_picker('Select a plot colour', '#1f77b4')
+        bin_count = st.slider('Select number of bins', min_value=5, max_value=100, value=20, step=1)
+
+        hist  = sns.displot(dataframe[box_hist], color=color_choice, bins=bin_count)
+        
+        plt.title(f"Histogram of {box_hist}")
+        st.pyplot(hist)
+
+        
+    interactive_hist(df)
+
+    st.divider()
+    
+    st.subheader("Numerical features against Target Variable (Claim Injury Type)")
+
+    def hist_target(dataframe):
+         # Reverse the encoding in the target column
+        label_mapping = { 
+        0: "1. CANCELLED",
+        1: "2. NON-COMP",
+        2: "3. MED ONLY",
+        3: "4. TEMPORARY",
+        4: "5. PPD SCH LOSS",
+        5: "6. PPD NSL",
+        6: "7. PTD",
+        7: "8. DEATH"   
+    }
+    
+        # Map the numeric Claim Injury Type to descriptive labels
+        dataframe['Claim Injury Type Label'] = dataframe['Claim Injury Type'].map(label_mapping)
+
+        # Reverse the encoding in the target column
+        target_var = dataframe['Claim Injury Type']
+    
+        # Create a dropdown for selecting numeric features
+        target_hist = st.selectbox('Feature', options=numeric_features, key="numeric_feature_hist")
+    
+        # Create a dropdown for selecting the number of bins
+        bin_count = st.slider('Select number of bins', min_value=5, max_value=100, value=30, key="bin_slider")
+
+        color_palette = "inferno"
+
+        # Plot the histogram
+        plt.figure(figsize=(10, 6))
+        sns.histplot(data=dataframe, x=target_hist, hue="Claim Injury Type Label", kde=True, bins=bin_count, palette=color_palette)
+        plt.title(f"Distribution of {target_hist} by Claim Injury Type")
+        st.pyplot(plt)
+    
+    hist_target(df)
+
+    st.divider()
+    
+    #Creating the map of County
+    st.subheader("Map of County Injury")
+    st.markdown("his map visualizes the frequency of injuries reported across various New York counties. Each point on the map represents a county, hover over the points to see more details about each one of them.")
+    
+    
+    def dysplay_map (Dataframe):
+
+        fig = px.scatter_mapbox(Dataframe, lat ='Latitude',lon='Longitude', 
+                                color="Frequency", color_continuous_scale=px.colors.sequential.Inferno, zoom=3
+                                )
+        
+        fig.update_layout(mapbox_style='open-street-map')
+
+        st.plotly_chart(fig)
+    
+    dysplay_map(county_df)
+    
+    
+    
+    
+
+   
