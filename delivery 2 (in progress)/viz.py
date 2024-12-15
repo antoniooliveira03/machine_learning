@@ -120,7 +120,7 @@ def plot_cat_vs_num(df, categorical_column, numerical_column, plot_type="box"):
     palette = 'Oranges'
     
     # Sort Categores
-    category_order = sorted(df[categorical_column].unique())
+    category_order = sorted(df[categorical_column].astype(str).unique())
 
     # Plot Boxplot
     if plot_type == "box":
@@ -133,7 +133,9 @@ def plot_cat_vs_num(df, categorical_column, numerical_column, plot_type="box"):
                     palette=palette, order=category_order)
         
     plt.title(f'{categorical_column} vs {numerical_column}')
+    plt.xticks(rotation = 45)
     plt.show()
+
 
 
 
