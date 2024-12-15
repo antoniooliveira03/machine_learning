@@ -4,8 +4,8 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, \
     GradientBoostingClassifier, AdaBoostClassifier
 from xgboost import XGBClassifier 
-#from lightgbm import LGBMClassifier
-#from catboost import CatBoostClassifier
+from lightgbm import LGBMClassifier
+from catboost import CatBoostClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier

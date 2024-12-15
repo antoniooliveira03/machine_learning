@@ -15,12 +15,12 @@ from predict import show_predict
 
 
 # Load the logo
-img = Image.open("web_app/24_Nexus_Analytics.png")
-logo = Image.open("web_app/Nova_IMS.png")
+img = Image.open("./24_Nexus_Analytics.png")
+logo = Image.open("./Nova_IMS.png")
 
 #load Data for vizualizations 
-df= pd.read_csv("web_app/train_data_EDA.csv")
-county_df = pd.read_csv("web_app/geo_county.csv")
+df= pd.read_csv("./train_data_EDA.csv")
+county_df = pd.read_csv("./geo_county.csv")
 
 # Define the navigation menu
 def streamlit_menu():
