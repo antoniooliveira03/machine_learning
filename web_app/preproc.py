@@ -15,7 +15,8 @@ from sklearn.preprocessing import (
 from sklearn.model_selection import train_test_split
 # Models
 import models as mod
-from sklearn.ensemble import RandomForestClassifier  
+from sklearn.ensemble import RandomForestClassifier
+from xgboost import XGBClassifier 
 
 
 def preproc_(path):
@@ -94,7 +95,7 @@ def preproc_(path):
     user_input.drop(columns = drop, axis = 1, inplace = True)
 
     # Reading the train data
-    df= pd.read_csv("/Users/anaca/Documents/GitHub/machine_learning/delivery 2 (in progress)/test_data_EDA.csv",
+    df= pd.read_csv("/Users/anaca/Documents/GitHub/machine_learning/web_app/train_data_EDA.csv",
                     index_col='Claim Identifier')
     
     # Split the DataFrame into features (X) and target variable (y)
@@ -319,7 +320,7 @@ def preproc_(path):
     st.write('This will take a few (3-4) minutes')
 
     ## Modeling
-    model = RandomForestClassifier()
+    model = XGBClassifier()
     model.fit(X_train_RS, y_train)
     train_pred = model.predict(X_train_RS)
     val_pred = model.predict(X_val_RS)
