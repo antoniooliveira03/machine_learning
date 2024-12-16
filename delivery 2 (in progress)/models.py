@@ -357,7 +357,7 @@ def k_fold(method, X, y, test1, model_name,
     
     if file_name != None:
     
-        predictions.to_csv(f'./pred/{file_name}.csv')
+        predictions.to_csv(f'./pred/corrected_k_fold/{file_name}.csv')
 
 
     # Return data and treated Test_RS
