@@ -24,6 +24,16 @@ def encode(train, val, test, column, type_):
         train[new_column] = train[column].map(freq).astype(int)
         val[new_column] = val[column].map(freq).astype(int)
         test[new_column] = test[column].map(freq).astype(int)
+
+    # Frequency Encoding
+    elif type_ == 'freq':
+        new_column = column + ' Enc'  
+
+        # Count encoding based on training data
+        freq = train[column].value_counts(normalize = True)
+        train[new_column] = train[column].map(freq)
+        val[new_column] = val[column].map(freq)
+        test[new_column] = test[column].map(freq)
         
     # One Hot Encoding
     elif type_ == 'OHE':

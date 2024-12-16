@@ -20,8 +20,9 @@ from sklearn.ensemble import RandomForestClassifier, \
 from xgboost import XGBClassifier 
 from lightgbm import LGBMClassifier
 from sklearn.neural_network import MLPClassifier
-from sklearn.naive_bayes import GaussianNB
+from sklearn.naive_bayes import GaussianNB, CategoricalNB
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
 
 # Metrics
 from sklearn.metrics import f1_score, precision_score, recall_score, confusion_matrix
@@ -48,13 +49,17 @@ def run_model(model_name, X, y, params = None):
         model = XGBClassifier(**params).fit(X, y)
     elif model_name == 'MLP':
         model = MLPClassifier(**params).fit(X, y)
-    elif model_name == 'NB':  
+    elif model_name == 'GNB':  
         model = GaussianNB().fit(X, y)
+    elif model_name == 'CNB':  
+        model = CategoricalNB().fit(X, y)
     elif model_name == 'KNN':  
         model = KNeighborsClassifier(**params).fit(X, y)
     elif model_name == 'LGBM':  
         model = LGBMClassifier(**params).fit(X, y)
-        
+    elif model_name == 'SVM':  
+        model = SVC(**params).fit(X, y)
+    
     return model
 
 
@@ -101,7 +106,9 @@ def modeling(model_names, params,
 
 # KFOLD
 
-def k_fold(method, X, y, test1, model_name, params):
+def k_fold(method, X, y, test1, model_name, 
+           params, enc, outliers = False,
+           file_name = None):
 
     # Save metrics
     f1macro_train = []
@@ -139,24 +146,24 @@ def k_fold(method, X, y, test1, model_name, params):
         X_val['Carrier Name Enc'] = X_val['Carrier Name'].map(common_category_map).fillna(0).astype(int)
         test['Carrier Name Enc'] = test['Carrier Name'].map(common_category_map).fillna(0).astype(int)
 
-        X_train, X_val, test = p.encode(X_train, X_val, test, 'Carrier Name Enc', 'count')
+        X_train, X_val, test = p.encode(X_train, X_val, test, 'Carrier Name Enc', enc)
 
-        X_train, X_val, test = p.encode(X_train, X_val, test, 'Carrier Type', 'count')
+        X_train, X_val, test = p.encode(X_train, X_val, test, 'Carrier Type', enc)
         X_train, X_val, test = p.encode(X_train, X_val, test, 'Carrier Type', 'OHE')
 
-        X_train, X_val, test = p.encode(X_train, X_val, test, 'County of Injury', 'count')
+        X_train, X_val, test = p.encode(X_train, X_val, test, 'County of Injury', enc)
 
         X_train['COVID-19 Indicator Enc'] = X_train['COVID-19 Indicator'].replace({'N': 0, 'Y': 1})
         X_val['COVID-19 Indicator Enc'] = X_val['COVID-19 Indicator'].replace({'N': 0, 'Y': 1})
         test['COVID-19 Indicator Enc'] = test['COVID-19 Indicator'].replace({'N': 0, 'Y': 1})
 
-        X_train, X_val, test = p.encode(X_train, X_val, test, 'District Name', 'count')
+        X_train, X_val, test = p.encode(X_train, X_val, test, 'District Name', enc)
 
         X_train, X_val, test = p.encode(X_train, X_val, test, 'Gender', 'OHE')
 
-        X_train, X_val, test = p.encode(X_train, X_val, test, 'Medical Fee Region', 'count')
+        X_train, X_val, test = p.encode(X_train, X_val, test, 'Medical Fee Region', enc)
 
-        X_train, X_val, test = p.encode(X_train, X_val, test, 'Industry Sector', 'count')
+        X_train, X_val, test = p.encode(X_train, X_val, test, 'Industry Sector', enc)
 
         drop = ['Alternative Dispute Resolution', 'Attorney/Representative', 'Carrier Type', 'County of Injury',
                 'COVID-19 Indicator', 'District Name', 'Gender', 'Carrier Name',
@@ -255,6 +262,38 @@ def k_fold(method, X, y, test1, model_name, params):
         p.ball_tree_impute([X_train_RS, X_val_RS, test_RS], 
                            'Average Weekly Wage')
         
+        if outliers:
+            X_train_RS = X_train_RS[X_train_RS['Age at Injury'] < 2.0217391304347827]
+            
+            X_train_RS['Average Weekly Wage Sqrt'] = np.sqrt(X_train_RS['Average Weekly Wage'])
+
+            X_val_RS['Average Weekly Wage Sqrt'] = np.sqrt(X_val_RS['Average Weekly Wage'])
+
+            test_RS['Average Weekly Wage Sqrt'] = np.sqrt(test_RS['Average Weekly Wage'])
+            
+            upper_limit = X_train_RS['Average Weekly Wage'].quantile(0.99)
+            lower_limit = X_train_RS['Average Weekly Wage'].quantile(0.01)
+
+            X_train_RS['Average Weekly Wage'] = X_train_RS['Average Weekly Wage'].clip(lower = lower_limit
+                                                                  , upper=upper_limit)
+            
+            X_train_RS = X_train_RS[X_train_RS['Birth Year'] > -1.9782608695652173]
+            
+            X_train_RS['IME-4 Count Log'] = np.log1p(X_train_RS['IME-4 Count'])
+            X_train_RS['IME-4 Count Double Log'] = np.log1p(X_train_RS['IME-4 Count Log'])
+
+            X_val_RS['IME-4 Count Log'] = np.log1p(X_val_RS['IME-4 Count'])
+            X_val_RS['IME-4 Count Double Log'] = np.log1p(X_val_RS['IME-4 Count Log'])
+
+            test_RS['IME-4 Count Log'] = np.log1p(test_RS['IME-4 Count'])
+            test_RS['IME-4 Count Double Log'] = np.log1p(test_RS['IME-4 Count Log'])
+            
+            X_train_RS = X_train_RS[X_train_RS['Accident Date Year'] > -2.0]
+            
+            X_train_RS = X_train_RS[X_train_RS['C-2 Date Year'] > -2.0]
+            
+            y_train = y_train[X_train_RS.index]
+
         # Training
         model = run_model(model_name, X_train_RS, y_train, params.get(model_name, {}))
 
@@ -292,6 +331,27 @@ def k_fold(method, X, y, test1, model_name, params):
     std_recall_train = round(np.std(recall_train), 3)
     std_recall_val = round(np.std(recall_val), 3)
 
+    # Final Predictions
+    test_RS['Claim Injury Type'] = model.predict(test_RS)
+    
+    # Mapping
+    label_mapping = {
+        0: "1. CANCELLED",
+        1: "2. NON-COMP",
+        2: "3. MED ONLY",
+        3: "4. TEMPORARY",
+        4: "5. PPD SCH LOSS",
+        5: "6. PPD NSL",
+        6: "7. PTD",
+        7: "8. DEATH"}
+
+    test_RS['Claim Injury Type'] = test_RS['Claim Injury Type'].replace(label_mapping)
+    
+    predictions = test_RS['Claim Injury Type']
+    
+    predictions.to_csv(f'./pred/{file_name}.csv')
+
+
 
     # Return data and treated Test_RS
     return {
@@ -302,5 +362,6 @@ def k_fold(method, X, y, test1, model_name, params):
         'avg_precision_val': str(avg_precision_val) + '+/-' + str(std_precision_val),
         'avg_recall_train': str(avg_recall_train) + '+/-' + str(std_recall_train),
         'avg_recall_val': str(avg_recall_val) + '+/-' + str(std_recall_val),
-        'test_data': test_RS
+        'test_data': test_RS,
+        'predictions': predictions
     }
