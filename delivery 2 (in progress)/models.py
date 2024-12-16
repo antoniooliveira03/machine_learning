@@ -118,6 +118,20 @@ def k_fold(method, X, y, test1, model_name,
     recall_train = []
     recall_val = []
     timer = []
+    
+    # Mapping
+    label_mapping = {
+        0: "1. CANCELLED",
+        1: "2. NON-COMP",
+        2: "3. MED ONLY",
+        3: "4. TEMPORARY",
+        4: "5. PPD SCH LOSS",
+        5: "6. PPD NSL",
+        6: "7. PTD",
+        7: "8. DEATH"}
+    
+    test_preds = np.zeros((len(test1), len(label_mapping)))
+
 
     # For each fold
     for train_index, val_index in method.split(X, y):
@@ -300,6 +314,8 @@ def k_fold(method, X, y, test1, model_name,
         # Predictions
         pred_train = model.predict(X_train_RS)
         pred_val = model.predict(X_val_RS)
+        
+        test_preds += model.predict_proba(test_RS)
 
         # Metrics
         f1macro_train.append(f1_score(y_train, pred_train, average='macro'))
@@ -331,26 +347,17 @@ def k_fold(method, X, y, test1, model_name,
     std_recall_train = round(np.std(recall_train), 3)
     std_recall_val = round(np.std(recall_val), 3)
 
-    # Final Predictions
-    test_RS['Claim Injury Type'] = model.predict(test_RS)
-    
-    # Mapping
-    label_mapping = {
-        0: "1. CANCELLED",
-        1: "2. NON-COMP",
-        2: "3. MED ONLY",
-        3: "4. TEMPORARY",
-        4: "5. PPD SCH LOSS",
-        5: "6. PPD NSL",
-        6: "7. PTD",
-        7: "8. DEATH"}
+    # Final Predictions using Soft Voting
+    final_test_preds = np.argmax(test_preds / method.get_n_splits(), axis=1)
+    test_RS['Claim Injury Type'] = final_test_preds 
 
     test_RS['Claim Injury Type'] = test_RS['Claim Injury Type'].replace(label_mapping)
     
     predictions = test_RS['Claim Injury Type']
     
-    predictions.to_csv(f'./pred/{file_name}.csv')
-
+    if file_name != None:
+    
+        predictions.to_csv(f'./pred/{file_name}.csv')
 
 
     # Return data and treated Test_RS
