@@ -271,6 +271,14 @@ def fill_missing_times(df, cols):
 
 def detect_outliers_iqr(df, threshold):
 
+    """
+    Input:
+        df: dataframe to be checked
+        threshold: minimum % of outliers for the outliers to be saved
+
+    Output: boxplots with outliers, total and % of outliers, upper and lower bounds for each feature
+    """
+
     # Save outliers, their indices and upper and lower bounds
     outliers = []
     outliers_indices = set()

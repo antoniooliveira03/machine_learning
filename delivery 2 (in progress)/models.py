@@ -116,6 +116,24 @@ def k_fold(method, X, y, test1, model_name,
            params, enc, col = None, outliers = False,
            file_name = None,
            under_sample = False, over_sample = False):
+    
+    """
+    Inputs:
+        method: k-fold method
+        X, y: all data but target and target
+        test1: test data
+        model_name: model to use for training
+        params: parameters for said model
+        enc: type of encoding to be used ('count' for Count Encoding, 'freq' for Frequency Encoding)
+        col: columns to be used (if None uses all columns)
+        outliers: True for outliers to be treated, False otherwise
+        file_name: name for csv file with predictions
+        under_sample: if undersampling is to be applied
+        over_sample: if oversampling is to be applied
+        
+    Outputs: average time and metrics, the test dataset and the predictions made
+    
+    """
      
     if over_sample:
         oversampler = RandomOverSampler(random_state=42, sampling_strategy='auto') 
@@ -335,14 +353,16 @@ def k_fold(method, X, y, test1, model_name,
         # Training
         if col == None:
             model = run_model(model_name, X_train_RS, y_train, params.get(model_name, {}))
+            # Predictions
+            pred_train = model.predict(X_train_RS)
+            pred_val = model.predict(X_val_RS)
+            test_preds += model.predict_proba(test_RS)
         else:
             model = run_model(model_name, X_train_RS[col], y_train, params.get(model_name, {}))
-
-        # Predictions
-        pred_train = model.predict(X_train_RS)
-        pred_val = model.predict(X_val_RS)
-        
-        test_preds += model.predict_proba(test_RS)
+            # Predictions
+            pred_train = model.predict(X_train_RS[col])
+            pred_val = model.predict(X_val_RS[col])
+            test_preds += model.predict_proba(test_RS[col])
 
         # Metrics
         f1macro_train.append(f1_score(y_train, pred_train, average='macro'))
