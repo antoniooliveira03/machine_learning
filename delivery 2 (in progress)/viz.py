@@ -169,9 +169,10 @@ def plot_model_metrics(df, metrics, color="orange"):
     df = df.reset_index().rename(columns={"index": "Model"})
     
     for metric in metrics:
-        # Sort
+        # Sort column order
         sorted_df = df.sort_values(by=metric, ascending=True)
         
+        # Plot
         plt.figure(figsize=(8, 6))
         sns.barplot(x="Model", y=metric, data=sorted_df, color=color)
 
