@@ -14,6 +14,15 @@ import seaborn as sns
 ## ENCODE
 
 def encode(train, val, test, column, type_):
+
+    """
+    Inputs:
+        train, val, test: training, validation and test data
+        column: column to be encoded
+        type_: 'Count' for Count Encoding; 'Freq' for Frequency Encoding; 'OHE' for One Hot Encoding
+
+    Output: Datasets with the new Encoded Feature(s)
+    """
     
     # Count Encoding
     if type_ == 'count':
@@ -66,6 +75,15 @@ def encode(train, val, test, column, type_):
 
 def fill_dates(train_df, other_dfs, feature_prefix):
 
+    """
+    Inputs:
+        train_df: dataframe where the medians must be computed
+        others_dfs: dataframes to be filled with the computed mean
+        feature_prefix: feature's prefix that will be filled
+
+    Output: filled dates
+    """
+
     # Define column names
     year_col = f'{feature_prefix} Year'
     month_col = f'{feature_prefix} Month'
@@ -91,6 +109,14 @@ def fill_dates(train_df, other_dfs, feature_prefix):
 
 
 def fill_dow(dataframes, feature_prefix):
+
+    """
+    Inputs:
+        dataframes: dataframes to be filled
+        feature_prefix: feature's prefix that will be filled
+
+    Output: filled days of the week
+    """
 
     # Define column names
     year_col = f'{feature_prefix} Year'
@@ -125,6 +151,13 @@ def fill_dow(dataframes, feature_prefix):
 
 def fill_birth_year(dfs):
 
+    """
+    Input:
+        dfs: dataframes to be filled
+
+    Output: filled Birth Year feature
+    """
+
     # Define fixed column names
     year_col = 'Accident Date Year'
     age_col = 'Age at Injury'
@@ -140,7 +173,15 @@ def fill_birth_year(dfs):
 
 
 def ball_tree_impute(dfs, target, n_neighbors=5):
-    # Target is the variable we want to fill, in this case it will be used for Average Weekly Wage
+
+    """
+    Input:
+        dfs: dataframes to be filled
+        target: variable we want to fill, in this case it will be used for Average Weekly Wage
+        n_neighbors: number of neighbours to be used
+
+    Output: target
+    """
 
     for df in dfs:
 
@@ -173,6 +214,14 @@ def ball_tree_impute(dfs, target, n_neighbors=5):
 
 
 def fill_missing_times(df, cols):
+
+    """
+    Input:
+        df: dataframe to be filled
+        cols: columns that are to be filled
+
+    Output: dataframe with filled columns
+    """
 
     # Recompute Dates
     df['Accident Date'] = pd.to_datetime(
