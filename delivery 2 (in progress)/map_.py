@@ -9,9 +9,8 @@ def map_(geojson_file, df):
     This function takes a GeoJSON file and a DataFrame, matches the counties from the DataFrame
     with the counties in the GeoJSON, and plots the geometries on a map with a basemap.
 
-    Args:
-        geojson_file (str): Path to the GeoJSON file containing county geometries.
-        df (pandas.DataFrame): DataFrame containing the 'County of Injury' column.
+    geojson_file: Path to the GeoJSON file containing county geometries.
+    df (pandas.DataFrame): DataFrame containing the 'County of Injury' column.
     """
     # Load json File with Coordinates and County Names
     with open(geojson_file, 'r') as f:
