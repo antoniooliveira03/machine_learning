@@ -2,6 +2,10 @@ from sklearn.metrics import classification_report
 import pandas as pd
 
 def metrics(y_train, pred_train , y_val, pred_val):
+    '''
+    Input: actual values of X and y train and their predictions
+    Outputs: Classification Report for Train and Validation Data
+    '''
     print('______________________________________________________________________')
     print('                                TRAIN                                 ')
     print('----------------------------------------------------------------------')
@@ -16,6 +20,12 @@ def metrics(y_train, pred_train , y_val, pred_val):
 
 
 def metrics2(models, model_names):
+    '''
+    Input: 
+        models:list of Models to be evaluated
+        model_names: the names of said models
+    Outputs: DataFrame with metrics of the models and their training time
+    '''
 
     # Metrics
     f1macro_train = []

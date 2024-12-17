@@ -5,9 +5,26 @@ from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
 search_results_df = pd.DataFrame()
 
 def hyperparameter_search(model, param_grid, search_type, 
-                          X_train, y_train, scoring='accuracy', 
+                          X_train, y_train, scoring='f1_macro', 
                           cv=3, n_iter=10, random_state=42,
                           reset=False):
+    
+    """
+    Inputs:
+        model: model to be tuned    
+        param_grid: parameter grid
+        search_type:  'random': for RandomizedSearchCV or 'grid': for GridSearchCV
+        X_train, y_train: training data and target
+        scoring: metric to evaluate the models' performance
+        cv: number of cross-validation folds
+        n_iter: number of iterations for RandomizedSearchCV
+        random_state: seed for reproducibility
+        reset: whether to reset the `search_results_df` DataFrame
+
+    Outputs: DataFrame containing the best hyperparameters found for the model, along with the 
+             search type, number of fits, and model type. 
+    """
+
     
     # Use the global DataFrame to save results
     global search_results_df  
