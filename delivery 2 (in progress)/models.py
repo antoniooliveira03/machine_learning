@@ -16,16 +16,21 @@ from sklearn.preprocessing import (
 from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, \
-    GradientBoostingClassifier, AdaBoostClassifier
+    GradientBoostingClassifier, AdaBoostClassifier, HistGradientBoostingClassifier
 from xgboost import XGBClassifier 
 from lightgbm import LGBMClassifier
 from sklearn.neural_network import MLPClassifier
-from sklearn.naive_bayes import GaussianNB, CategoricalNB
+from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 
 # Metrics
 from sklearn.metrics import f1_score, precision_score, recall_score, confusion_matrix
+
+# Oversampling and Undersmpling
+from imblearn.under_sampling import RandomUnderSampler
+from imblearn.over_sampling import RandomOverSampler
+
 
 
 def run_model(model_name, X, y, params = None):
@@ -51,14 +56,15 @@ def run_model(model_name, X, y, params = None):
         model = MLPClassifier(**params).fit(X, y)
     elif model_name == 'GNB':  
         model = GaussianNB().fit(X, y)
-    elif model_name == 'CNB':  
-        model = CategoricalNB().fit(X, y)
     elif model_name == 'KNN':  
         model = KNeighborsClassifier(**params).fit(X, y)
     elif model_name == 'LGBM':  
         model = LGBMClassifier(**params).fit(X, y)
     elif model_name == 'SVM':  
         model = SVC(**params).fit(X, y)
+    elif model_name == 'HGBoost':  
+        model = HistGradientBoostingClassifier(**params).fit(X, y)
+
     
     return model
 
@@ -106,9 +112,17 @@ def modeling(model_names, params,
 
 # KFOLD
 
-def k_fold(method, X, y, test1, model_name, 
-           params, enc, outliers = False,
-           file_name = None):
+def k_fold(method, X, y, test1, model_name,
+           params, enc, col = None, outliers = False,
+           file_name = None,
+           under_sample = False, over_sample = False):
+     
+    if over_sample:
+        oversampler = RandomOverSampler(random_state=42, sampling_strategy='auto') 
+    if under_sample:
+        undersampler = RandomUnderSampler(random_state=42, 
+                                          sampling_strategy='auto')
+                                                                
 
     # Save metrics
     f1macro_train = []
@@ -141,14 +155,15 @@ def k_fold(method, X, y, test1, model_name,
 
         start_time = time.time()
         
-        # ENCODING
-        X_train['Alternative Dispute Resolution Bin'] = X_train['Alternative Dispute Resolution'].replace({'N': 0, 'Y': 1, 'U': 1})
-        X_val['Alternative Dispute Resolution Bin'] = X_val['Alternative Dispute Resolution'].replace({'N': 0, 'Y': 1, 'U': 1})
-        test['Alternative Dispute Resolution Bin'] = test['Alternative Dispute Resolution'].replace({'N': 0, 'Y': 1, 'U': 1})
 
-        X_train['Attorney/Representative Bin'] = X_train['Attorney/Representative'].replace({'N': 0, 'Y': 1})
-        X_val['Attorney/Representative Bin'] = X_val['Attorney/Representative'].replace({'N': 0, 'Y': 1})
-        test['Attorney/Representative Bin'] = test['Attorney/Representative'].replace({'N': 0, 'Y': 1})
+        # ENCODING
+        X_train['Alternative Dispute Resolution Enc'] = X_train['Alternative Dispute Resolution'].replace({'N': 0, 'Y': 1, 'U': 1})
+        X_val['Alternative Dispute Resolution Enc'] = X_val['Alternative Dispute Resolution'].replace({'N': 0, 'Y': 1, 'U': 1})
+        test['Alternative Dispute Resolution Enc'] = test['Alternative Dispute Resolution'].replace({'N': 0, 'Y': 1, 'U': 1})
+
+        X_train['Attorney/Representative Enc'] = X_train['Attorney/Representative'].replace({'N': 0, 'Y': 1})
+        X_val['Attorney/Representative Enc'] = X_val['Attorney/Representative'].replace({'N': 0, 'Y': 1})
+        test['Attorney/Representative Enc'] = test['Attorney/Representative'].replace({'N': 0, 'Y': 1})
 
         train_carriers = set(X_train['Carrier Name'].unique())
         test_carriers = set(test['Carrier Name'].unique())
@@ -166,7 +181,7 @@ def k_fold(method, X, y, test1, model_name,
         X_train, X_val, test = p.encode(X_train, X_val, test, 'Carrier Type', 'OHE')
 
         X_train, X_val, test = p.encode(X_train, X_val, test, 'County of Injury', enc)
-
+        
         X_train['COVID-19 Indicator Enc'] = X_train['COVID-19 Indicator'].replace({'N': 0, 'Y': 1})
         X_val['COVID-19 Indicator Enc'] = X_val['COVID-19 Indicator'].replace({'N': 0, 'Y': 1})
         test['COVID-19 Indicator Enc'] = test['COVID-19 Indicator'].replace({'N': 0, 'Y': 1})
@@ -238,9 +253,6 @@ def k_fold(method, X, y, test1, model_name,
            'Assembly Date Day', 'C-2 Date Year', 'C-2 Date Month',
            'C-2 Date Day', 'Accident to Assembly Time',
            'Assembly to C-2 Time', 'Accident to C-2 Time']
-          # 'Wage to Age Ratio', 'Average Weekly Wage Sqrt',
-          # 'IME-4 Count Log', 'IME-4 Count Double Log']
-
 
         categ = [var for var in X_train.columns if var not in num]
 
@@ -307,9 +319,24 @@ def k_fold(method, X, y, test1, model_name,
             X_train_RS = X_train_RS[X_train_RS['C-2 Date Year'] > -2.0]
             
             y_train = y_train[X_train_RS.index]
+            
+            
+        # Oversampling and Undersmpling
+        if over_sample:
+            X_train_RS, y_train = oversampler.fit_resample(X_train_RS, y_train)
+
+        elif under_sample:
+            X_train_RS, y_train = undersampler.fit_resample(X_train_RS, y_train)
+            
+            
+        print(y_train.value_counts())
+
 
         # Training
-        model = run_model(model_name, X_train_RS, y_train, params.get(model_name, {}))
+        if col == None:
+            model = run_model(model_name, X_train_RS, y_train, params.get(model_name, {}))
+        else:
+            model = run_model(model_name, X_train_RS[col], y_train, params.get(model_name, {}))
 
         # Predictions
         pred_train = model.predict(X_train_RS)
