@@ -164,3 +164,21 @@ def generate_wordcloud(df, column_name, title='Word Cloud', width=800, height=40
     plt.axis('off')
     plt.title(title, fontsize=16)
     plt.show()
+
+def plot_model_metrics(df, metrics, color="orange"):
+    df = df.reset_index().rename(columns={"index": "Model"})
+    
+    for metric in metrics:
+        # Sort column order
+        sorted_df = df.sort_values(by=metric, ascending=True)
+        
+        # Plot
+        plt.figure(figsize=(8, 6))
+        sns.barplot(x="Model", y=metric, data=sorted_df, color=color)
+
+        plt.title(f"{metric.replace('_', ' ').title()}", fontsize=16)
+        plt.xlabel("Model", fontsize=12)
+        plt.ylabel(metric.replace("_", " ").title(), fontsize=12)
+        plt.xticks(rotation=45)
+        plt.tight_layout()  
+        plt.show()
