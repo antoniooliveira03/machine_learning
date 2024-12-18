@@ -33,12 +33,13 @@ from imblearn.over_sampling import RandomOverSampler
 
 
 
-def run_model(model_name, X, y, params = None):
+def run_model(model_name, X, y, random_state, params = None):
 
     """
     Inputs:
         model_name: name of the model to be fit
         X, y: data
+        random_state: random_state parameter
         params: parameters for said model
         - should be inputed as follows: {'model_name': {'parameter1': value1,
                                                         'parameter2': value2 }}
@@ -51,31 +52,31 @@ def run_model(model_name, X, y, params = None):
         params = {}
 
     if model_name == 'LR':
-        model = LogisticRegression(**params).fit(X, y)
+        model = LogisticRegression(**params, random_state=random_state).fit(X, y)
     elif model_name == 'SGD':
-        model = SGDClassifier(**params).fit(X, y)
+        model = SGDClassifier(**params, random_state=random_state).fit(X, y)
     elif model_name == 'DT':
-        model = DecisionTreeClassifier(**params).fit(X, y)
+        model = DecisionTreeClassifier(**params, random_state=random_state).fit(X, y)
     elif model_name == 'RF':
-        model = RandomForestClassifier(**params).fit(X, y)
+        model = RandomForestClassifier(**params, random_state=random_state).fit(X, y)
     elif model_name == 'AdaBoost':
-        model = AdaBoostClassifier(**params).fit(X, y)
+        model = AdaBoostClassifier(**params, random_state=random_state).fit(X, y)
     elif model_name == 'GBoost':
-        model = GradientBoostingClassifier(**params).fit(X, y)
+        model = GradientBoostingClassifier(**params, random_state=random_state).fit(X, y)
     elif model_name == 'XGB':
-        model = XGBClassifier(**params).fit(X, y)
+        model = XGBClassifier(**params, random_state=random_state).fit(X, y)
     elif model_name == 'MLP':
-        model = MLPClassifier(**params).fit(X, y)
+        model = MLPClassifier(**params, random_state=random_state).fit(X, y)
     elif model_name == 'GNB':  
         model = GaussianNB().fit(X, y)
     elif model_name == 'KNN':  
         model = KNeighborsClassifier(**params).fit(X, y)
     elif model_name == 'LGBM':  
-        model = LGBMClassifier(**params).fit(X, y)
+        model = LGBMClassifier(**params, random_state=random_state).fit(X, y)
     elif model_name == 'SVM':  
-        model = SVC(**params).fit(X, y)
+        model = SVC(**params,).fit(X, y)
     elif model_name == 'HGBoost':  
-        model = HistGradientBoostingClassifier(**params).fit(X, y)
+        model = HistGradientBoostingClassifier(**params, random_state=random_state).fit(X, y)
 
     
     return model
@@ -83,13 +84,15 @@ def run_model(model_name, X, y, params = None):
 
 def modeling(model_names, params,
              X_train, y_train, 
-             X_val, y_val):
+             X_val, y_val, 
+             random_state):
     
     """
     Inputs:
         model_names: model to be trained
         params: parameters for said models
         X_train, y_train, X_val, y_val: training and validation data
+        random_state: random_state parameter
 
     Output: dictionary with performance emtrics
     """
@@ -100,7 +103,7 @@ def modeling(model_names, params,
         print(f"Training model: {model_name}")
         
         # Training
-        model = run_model(model_name, X_train, y_train, params.get(model_name, {}))
+        model = run_model(model_name, X_train, y_train, random_state, params.get(model_name, {}))
         
         # Predictions
         y_train_pred = model.predict(X_train)
@@ -133,7 +136,7 @@ def modeling(model_names, params,
 
 # KFOLD
 
-def k_fold(method, X, y, test1, model_name,
+def k_fold(method, X, y, test1, model_name, random_state,
            params, enc, col = None, outliers = False,
            file_name = None,
            under_sample = False, over_sample = False):
@@ -144,6 +147,7 @@ def k_fold(method, X, y, test1, model_name,
         X, y: all data but target and target
         test1: test data
         model_name: model to use for training
+        random_state: random_state parameter
         params: parameters for said model
         enc: type of encoding to be used ('count' for Count Encoding, 'freq' for Frequency Encoding)
         col: columns to be used (if None uses all columns)
@@ -371,13 +375,13 @@ def k_fold(method, X, y, test1, model_name,
             
         # Training
         if col == None:
-            model = run_model(model_name, X_train_RS, y_train, params.get(model_name, {}))
+            model = run_model(model_name, X_train_RS, y_train, random_state = random_state, params = params.get(model_name, {}))
             # Predictions
             pred_train = model.predict(X_train_RS)
             pred_val = model.predict(X_val_RS)
             test_preds += model.predict_proba(test_RS)
         else:
-            model = run_model(model_name, X_train_RS[col], y_train, params.get(model_name, {}))
+            model = run_model(model_name, X_train_RS[col], y_train, random_state = random_state, params = params.get(model_name, {}))
             # Predictions
             pred_train = model.predict(X_train_RS[col])
             pred_val = model.predict(X_val_RS[col])
