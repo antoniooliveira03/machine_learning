@@ -35,6 +35,18 @@ from imblearn.over_sampling import RandomOverSampler
 
 def run_model(model_name, X, y, params = None):
 
+    """
+    Inputs:
+        model_name: name of the model to be fit
+        X, y: data
+        params: parameters for said model
+        - should be inputed as follows: {'model_name': {'parameter1': value1,
+                                                        'parameter2': value2 }}
+
+
+    Outputs: fitted model
+    """
+
     if params is None:
         params = {}
 
@@ -72,6 +84,15 @@ def run_model(model_name, X, y, params = None):
 def modeling(model_names, params,
              X_train, y_train, 
              X_val, y_val):
+    
+    """
+    Inputs:
+        model_names: model to be trained
+        params: parameters for said models
+        X_train, y_train, X_val, y_val: training and validation data
+
+    Output: dictionary with performance emtrics
+    """
     
     results = {}
     
@@ -342,14 +363,12 @@ def k_fold(method, X, y, test1, model_name,
         # Oversampling and Undersmpling
         if over_sample:
             X_train_RS, y_train = oversampler.fit_resample(X_train_RS, y_train)
+            print(y_train.value_counts())
 
         elif under_sample:
             X_train_RS, y_train = undersampler.fit_resample(X_train_RS, y_train)
+            print(y_train.value_counts())
             
-            
-        print(y_train.value_counts())
-
-
         # Training
         if col == None:
             model = run_model(model_name, X_train_RS, y_train, params.get(model_name, {}))
