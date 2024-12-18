@@ -182,3 +182,25 @@ def plot_model_metrics(df, metrics, color="orange"):
         plt.xticks(rotation=45)
         plt.tight_layout()  
         plt.show()
+
+
+def plot_metrics_kfold(df):
+    """
+    Input: dataframe
+    Output: metrics plot
+    """
+    metrics = df.index 
+    models = df.columns 
+
+    # For each metric
+    for metric in metrics:
+        values = [float(value.split("+/-")[0]) for value in df.loc[metric]]
+        
+        # Plot
+        plt.figure(figsize=(8, 6))
+        plt.bar(models, values, color="orange")
+        plt.title(metric, fontsize=16)
+        plt.ylabel("Value", fontsize=12)
+        plt.xlabel("Model", fontsize=12)
+        plt.tight_layout()
+        plt.show()
