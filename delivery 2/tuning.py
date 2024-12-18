@@ -62,6 +62,11 @@ def hyperparameter_search(model, param_grid, search_type,
     best_params_df["Search Type"] = "RandomizedSearchCV" if search_type == "random" else "GridSearchCV"
     best_params_df["Number of Fits"] = len(search.cv_results_["params"])
     best_params_df["Model"] = str(model).split("(")[0] 
+
+    # Macro f1
+    best_index = search.best_index_  
+    best_params_df["Best Macro F1"] = search.cv_results_["mean_test_score"][best_index]
+    
     
     # Append to DataFrame
     search_results_df = pd.concat([search_results_df, best_params_df], ignore_index=True)
