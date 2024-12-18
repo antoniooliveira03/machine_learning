@@ -22,6 +22,10 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report, f1_score
 
 def correlation_matrix(X, cmap='YlOrBr'):
+    """
+    Input: X (numerical data)
+    Output: Correlation Matrix
+    """
     
     # Correlation matrix
     corr_matrix = X.corr().abs()
@@ -33,6 +37,14 @@ def correlation_matrix(X, cmap='YlOrBr'):
     plt.show()
 
 def chi_squared(X_categ, y, threshold=0.05):
+
+    """
+    Input: 
+        X_categ: categorical data  
+        y: target 
+    Output: Plot, initial and selected features, chi-squared scores and p-values
+    
+    """
     
     # Scale 
     scaler = MinMaxScaler()
@@ -80,6 +92,14 @@ def chi_squared(X_categ, y, threshold=0.05):
     print(non_selected_features[['Feature', 'Chi2 Score', 'p-value']])
 
 def mutual_info(X, y, threshold=0.1):
+
+    """
+    Input: 
+        X: categorical data  
+        y: target 
+        threshold: minimum acceptable value of MIC scores
+    Output: Plot, initial and selected features
+    """
     
     # MI scores
     mi_scores = mutual_info_classif(X, y, random_state=0)
@@ -105,6 +125,15 @@ def mutual_info(X, y, threshold=0.1):
 
 
 def rfe(X_train, y_train, X_val, y_val, n_features, model=None):
+
+    """
+    Input: 
+        X_train, y_train, X_val, y_val: training and validation data
+        n_features: number of features to use for RFE
+        model: chosen model 
+    Output: classification report and macro_f1 score for each n_features and 
+            a final decision on the optimal number of features to use
+    """
     
     best_score = 0
     best_features = []
@@ -151,6 +180,13 @@ def rfe(X_train, y_train, X_val, y_val, n_features, model=None):
 
 
 def lasso(X, y, alpha = 0.01, color = 'orange'):
+
+    """
+    Input: 
+        X, y: data
+        alpha: parameter for lasso
+    Output: Plot, initial and selected features
+    """
     
     # Fit
     lasso = Lasso(alpha=alpha)
@@ -175,6 +211,14 @@ def lasso(X, y, alpha = 0.01, color = 'orange'):
 
 def plot_feature_importance(X_num, X_categ, y, n_estimators=250, random_state=42,
                             threshold=5):
+    
+    """
+    Input: 
+        X_num, X_categ, y: numeric, categorical and target data
+        n_estimators: number of estimators to use
+        threshold: value above which a feature is considered important 
+    Output: Plot, initial and selected features
+    """
     
     # Combine Numeric and Categroical
     X_comb = pd.concat([X_num, X_categ], axis=1)
